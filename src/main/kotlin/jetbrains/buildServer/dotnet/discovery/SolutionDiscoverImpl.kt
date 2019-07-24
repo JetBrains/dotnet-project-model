@@ -1,7 +1,7 @@
 package jetbrains.buildServer.dotnet.discovery
 
-import com.intellij.openapi.diagnostic.Logger
-
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 class SolutionDiscoverImpl(
     private val _discoverers: List<SolutionDeserializer>
@@ -30,6 +30,6 @@ class SolutionDiscoverImpl(
     }
 
     companion object {
-        private val LOG: Logger = Logger.getInstance(SolutionDiscoverImpl::class.java.name)
+        private val LOG: Logger = LoggerFactory.getLogger(SolutionDiscoverImpl::class.java.name)
     }
 }
