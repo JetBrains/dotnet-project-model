@@ -8,6 +8,10 @@ repositories {
     mavenCentral()
 }
 
+test {
+    useTestNG()
+}
+
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib"
     compile 'com.google.code.gson:gson:2.5'
