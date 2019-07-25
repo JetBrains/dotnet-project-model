@@ -17,4 +17,5 @@ class JsonProjectDto {
     var configurations: Map<String, Any>? = null
     var frameworks: Map<String, Any>? = null
     var runtimes: Map<String, Any>? = null
+    var dependencies: Map<String, Any>? = null
 }

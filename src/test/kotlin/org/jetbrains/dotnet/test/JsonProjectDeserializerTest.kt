@@ -9,6 +9,13 @@ import org.testng.annotations.Test
 class JsonProjectDeserializerTest {
     @DataProvider
     fun testDeserializeData(): Array<Array<Any>> {
+        val referencies = listOf("Microsoft.Bcl.Immutable" to "1.1.18-beta-*",
+            "Microsoft.AspNet.ConfigurationModel" to "0.1-alpha-*",
+            "Microsoft.AspNet.DependencyInjection" to "0.1-alpha-*",
+            "Microsoft.AspNet.Logging" to "0.1-alpha-*",
+            "System.Data.Common" to "0.1-alpha-*"
+        ).map { Reference(it) }
+
         return arrayOf(
             arrayOf(
                 "/project.json",
@@ -22,7 +29,7 @@ class JsonProjectDeserializerTest {
                                 Framework("dnxcore50")
                             ),
                             emptyList(),
-                            emptyList()
+                            referencies
                         )
                     )
                 )

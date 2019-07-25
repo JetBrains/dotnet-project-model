@@ -34,7 +34,7 @@ class SolutionDiscoverTest {
                         Runtime("win-7x86"),
                         Runtime("ubuntu.16.10-x64")
                     ),
-                    listOf(Reference("Microsoft.NET.Sdk"))
+                    listOf(Reference("Microsoft.NET.Sdk", ""))
                 )
             )
         )
@@ -49,8 +49,8 @@ class SolutionDiscoverTest {
                         Runtime("win-7x86")
                     ),
                     listOf(
-                        Reference("Microsoft.NET.sdk"),
-                        Reference("Microsoft.NET.test.sdk")
+                        Reference("Microsoft.NET.sdk", ""),
+                        Reference("Microsoft.NET.test.sdk", "")
                     )
                 )
             )

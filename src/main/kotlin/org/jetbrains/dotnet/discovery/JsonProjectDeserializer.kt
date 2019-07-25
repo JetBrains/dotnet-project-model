@@ -2,6 +2,8 @@ package org.jetbrains.dotnet.discovery
 
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import com.google.gson.JsonObject
+import org.jetbrains.dotnet.discovery.Reference.Companion.DEFAULT_VERSION
 import java.util.regex.Pattern
 
 class JsonProjectDeserializer(
@@ -29,6 +31,17 @@ class JsonProjectDeserializer(
                     } ?: emptyList()
                     val frameworks = project.frameworks?.keys?.map { Framework(it) } ?: emptyList()
                     val runtimes = project.runtimes?.keys?.map { Runtime(it) } ?: emptyList()
+                    val references = project.dependencies?.mapNotNull { (name, info) ->
+                        val version = when(info) {
+                            is String -> info
+                            is JsonObject -> {
+                                info["version"]?.asString
+                            }
+                            else -> null
+                        } ?: DEFAULT_VERSION
+                        Reference(name, version)
+                    } ?: emptyList()
+
                     Solution(
                         listOf(
                             Project(
@@ -36,7 +49,7 @@ class JsonProjectDeserializer(
                                 configurations,
                                 frameworks,
                                 runtimes,
-                                emptyList()
+                                references
                             )
                         )
                     )

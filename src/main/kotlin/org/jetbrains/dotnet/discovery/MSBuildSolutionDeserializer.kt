@@ -15,21 +15,17 @@ class MSBuildSolutionDeserializer(
                     val projects = it
                         .readLines()
                         .asSequence()
-                        .map { ProjectPathPattern.matcher(it) }
+                        .mapNotNull { ProjectPathPattern.matcher(it) }
                         .filter { it.find() }
-                        .map {
-                            it?.let {
-                                val projectPath = normalizePath(path, it.group(1))
-                                if (_msBuildProjectDeserializer.accept(projectPath)) {
-                                    _msBuildProjectDeserializer.deserialize(projectPath, streamFactory)
-                                        .projects.asSequence()
-                                } else {
-                                    emptySequence()
-                                }
-                            } ?: emptySequence()
+                        .flatMap {
+                            val projectPath = normalizePath(path, it.group(1))
+                            if (_msBuildProjectDeserializer.accept(projectPath)) {
+                                _msBuildProjectDeserializer.deserialize(projectPath, streamFactory)
+                                    .projects.asSequence()
+                            } else {
+                                emptySequence()
+                            }
                         }
-                        .asSequence()
-                        .flatMap { it }
                         .distinctBy { it.project }
                         .toList()
 

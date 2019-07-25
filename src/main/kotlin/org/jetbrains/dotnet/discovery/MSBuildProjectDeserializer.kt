@@ -2,6 +2,7 @@ package org.jetbrains.dotnet.discovery
 
 
 import org.jetbrains.dotnet.common.XmlDocumentService
+import org.jetbrains.dotnet.discovery.Reference.Companion.DEFAULT_VERSION
 import org.w3c.dom.Document
 import org.w3c.dom.Element
 import org.w3c.dom.NodeList
@@ -21,10 +22,8 @@ class MSBuildProjectDeserializer(
                 val doc = _xmlDocumentService.deserialize(it)
 
                 val configurations = getAttributes(doc, "/Project/*[@Condition]", "Condition")
-                    .map { ConditionPattern.find(it) }
-                    .map { it?.let { it.groupValues[2] } }
-                    .filter { !it.isNullOrBlank() }
-                    .map { it as String }
+                    .mapNotNull { ConditionPattern.find(it)?.groupValues?.get(2) }
+                    .filter { it.isNotBlank() }
                     .plus(getContents(doc, "/Project/PropertyGroup/Configuration"))
                     .distinct()
                     .map { Configuration(it) }
@@ -44,14 +43,21 @@ class MSBuildProjectDeserializer(
                     .map { Runtime(it) }
                     .toList()
 
-                val references = getAttributes(doc, "/Project/ItemGroup/PackageReference[@Include]", "Include")
-                    .filter { !it.isBlank() }
+                val references = getPackageReferences(doc, "/Project/ItemGroup/PackageReference[@Include]")
+                    .filter { it.id.isNotBlank() }
                     .plus(
                         getAttributes(doc, "/Project/ItemGroup/Reference[@Include]", "Include")
-                            .map { it.split(',').firstOrNull() }
-                            .filter { !it.isNullOrBlank() })
+                            .map {
+                                val attributes = it.split(',')
+                                val id = attributes.first()
+                                val version = attributes
+                                    .mapNotNull { versionPattern.find(it)?.groupValues?.get(1) }
+                                    .firstOrNull() ?: DEFAULT_VERSION
+
+                                Reference(id, version)
+                            }
+                            .filter { it.id.isNotBlank() })
                     .distinct()
-                    .map { Reference(it!!) }
                     .toList()
 
                 val targets = getAttributes(doc, "/Project/Target[@Name]", "Name")
@@ -93,11 +99,28 @@ class MSBuildProjectDeserializer(
     private fun getAttributes(doc: Document, xpath: String, attributeName: String): Sequence<String> =
         getElements(doc, xpath).map { it.getAttribute(attributeName) }.filter { !it.isNullOrBlank() }
 
+    private fun getPackageReferences(doc: Document, xpath: String): Sequence<Reference> =
+        getElements(doc, xpath)
+            .map { Reference(it.getAttribute("Include") ?: "", getVersion(it))}
+            .filter { it.id.isNotEmpty() }
+
+    private fun getVersion(element: Element): String {
+        val rawVersion = when {
+            element.hasAttribute("Version") -> element.getAttribute("Version")
+            else -> element.getElementsByTagName("Version")?.item(0)?.textContent
+        }
+        return if (rawVersion.isNullOrBlank()) {
+            DEFAULT_VERSION
+        } else {
+            rawVersion
+        }
+    }
     private val xPath = XPathFactory.newInstance().newXPath()
 
     companion object {
         private val ConditionPattern: Regex =
             Regex("'\\$\\(Configuration\\)([^']*)' == '([^|]*)([^']*)'", RegexOption.IGNORE_CASE)
         private val PathPattern: Pattern = Pattern.compile("^.+\\.(proj|csproj|vbproj)$", CASE_INSENSITIVE)
+        private val versionPattern: Regex = Regex("""^\s*Version\s*=\s*(.*)$""")
     }
 }

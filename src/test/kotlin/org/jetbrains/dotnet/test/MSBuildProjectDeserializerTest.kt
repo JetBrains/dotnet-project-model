@@ -58,10 +58,10 @@ class MSBuildProjectDeserializerTest {
                             emptyList(),
                             emptyList(),
                             listOf(
-                                Reference("nunit.engine.api"),
-                                Reference("System"),
-                                Reference("System.Data"),
-                                Reference("System.Xml")
+                                Reference("nunit.engine.api", "3.0.0.0"),
+                                Reference("System", "*"),
+                                Reference("System.Data", "*"),
+                                Reference("System.Xml", "*")
                             )
                         )
                     )
@@ -77,8 +77,8 @@ class MSBuildProjectDeserializerTest {
                             listOf(Framework("netcoreapp1.0")),
                             emptyList(),
                             listOf(
-                                Reference("Microsoft.NET.Sdk"),
-                                Reference("Microsoft.NET.Test.Sdk")
+                                Reference("Microsoft.NET.Sdk", "1.0.0-alpha-20161104-2"),
+                                Reference("Microsoft.NET.Test.Sdk", "15.0.0-preview-20161024-02")
                             )
                         )
                     )
@@ -113,8 +113,8 @@ class MSBuildProjectDeserializerTest {
                             listOf(Framework("netcoreapp1.0")),
                             emptyList(),
                             listOf(
-                                Reference("Microsoft.NET.Sdk"),
-                                Reference("Microsoft.NET.Test.Sdk")
+                                Reference("Microsoft.NET.Sdk", "1.0.0-alpha-20161104-2"),
+                                Reference("Microsoft.NET.Test.Sdk", "15.0.0-preview-20161024-02")
                             )
                         )
                     )
@@ -132,7 +132,7 @@ class MSBuildProjectDeserializerTest {
                                 Framework("netstandard1.3")
                             ),
                             emptyList(),
-                            listOf(Reference("Newtonsoft.Json"))
+                            listOf(Reference("Newtonsoft.Json", "10.0.3"))
                         )
                     )
                 )
