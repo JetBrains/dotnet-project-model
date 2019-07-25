@@ -20,40 +20,38 @@ class JsonProjectDeserializer(
     override fun accept(path: String): Boolean = PathPattern.matcher(path).find()
 
     override fun deserialize(path: String, streamFactory: StreamFactory): Solution =
-        streamFactory.tryCreate(path)?.let {
-            it.use {
-                _readerFactory.create(it).use {
-                    val project = _gson.fromJson(it, JsonProjectDto::class.java)
-                    val configurations = project.configurations?.keys?.map {
-                        Configuration(
-                            it
-                        )
-                    } ?: emptyList()
-                    val frameworks = project.frameworks?.keys?.map { Framework(it) } ?: emptyList()
-                    val runtimes = project.runtimes?.keys?.map { Runtime(it) } ?: emptyList()
-                    val references = project.dependencies?.mapNotNull { (name, info) ->
-                        val version = when(info) {
-                            is String -> info
-                            is JsonObject -> {
-                                info["version"]?.asString
-                            }
-                            else -> null
-                        } ?: DEFAULT_VERSION
-                        Reference(name, version)
-                    } ?: emptyList()
+        streamFactory.tryCreate(path)?.use {
+            _readerFactory.create(it).use {
+                val project = _gson.fromJson(it, JsonProjectDto::class.java)
+                val configurations = project.configurations?.keys?.map {
+                    Configuration(
+                        it
+                    )
+                } ?: emptyList()
+                val frameworks = project.frameworks?.keys?.map { Framework(it) } ?: emptyList()
+                val runtimes = project.runtimes?.keys?.map { Runtime(it) } ?: emptyList()
+                val references = project.dependencies?.mapNotNull { (name, info) ->
+                    val version = when(info) {
+                        is String -> info
+                        is JsonObject -> {
+                            info["version"]?.asString
+                        }
+                        else -> null
+                    } ?: DEFAULT_VERSION
+                    Reference(name, version)
+                } ?: emptyList()
 
-                    Solution(
-                        listOf(
-                            Project(
-                                path,
-                                configurations,
-                                frameworks,
-                                runtimes,
-                                references
-                            )
+                Solution(
+                    listOf(
+                        Project(
+                            path,
+                            configurations,
+                            frameworks,
+                            runtimes,
+                            references
                         )
                     )
-                }
+                )
             }
         } ?: Solution(emptyList())
 

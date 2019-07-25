@@ -9,28 +9,26 @@ class MSBuildSolutionDeserializer(
     override fun accept(path: String): Boolean = PathPattern.matcher(path).find()
 
     override fun deserialize(path: String, streamFactory: StreamFactory): Solution =
-        streamFactory.tryCreate(path)?.let {
-            it.use {
-                _readerFactory.create(it).use {
-                    val projects = it
-                        .readLines()
-                        .asSequence()
-                        .mapNotNull { ProjectPathPattern.matcher(it) }
-                        .filter { it.find() }
-                        .flatMap {
-                            val projectPath = normalizePath(path, it.group(1))
-                            if (_msBuildProjectDeserializer.accept(projectPath)) {
-                                _msBuildProjectDeserializer.deserialize(projectPath, streamFactory)
-                                    .projects.asSequence()
-                            } else {
-                                emptySequence()
-                            }
+        streamFactory.tryCreate(path)?.use {
+            _readerFactory.create(it).use {
+                val projects = it
+                    .readLines()
+                    .asSequence()
+                    .mapNotNull { ProjectPathPattern.matcher(it) }
+                    .filter { it.find() }
+                    .flatMap {
+                        val projectPath = normalizePath(path, it.group(1))
+                        if (_msBuildProjectDeserializer.accept(projectPath)) {
+                            _msBuildProjectDeserializer.deserialize(projectPath, streamFactory)
+                                .projects.asSequence()
+                        } else {
+                            emptySequence()
                         }
-                        .distinctBy { it.project }
-                        .toList()
+                    }
+                    .distinctBy { it.project }
+                    .toList()
 
-                    Solution(projects, path)
-                }
+                Solution(projects, path)
             }
         } ?: Solution(emptyList())
 
