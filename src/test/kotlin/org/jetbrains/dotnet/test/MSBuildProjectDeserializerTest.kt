@@ -24,7 +24,10 @@ class MSBuildProjectDeserializerTest {
                                 Runtime("win-7x86"),
                                 Runtime("ubuntu.16.10-x64")
                             ),
-                            emptyList()
+                            listOf(
+                                Reference("jQuery", "3.1.1"),
+                                Reference("NLog", "4.3.10")
+                            )
                         )
                     )
                 )
@@ -38,7 +41,10 @@ class MSBuildProjectDeserializerTest {
                             emptyList(),
                             listOf(Framework("netstandard2.0")),
                             emptyList(),
-                            emptyList(),
+                            listOf(
+                                Reference("jQuery", "3.1.1"),
+                                Reference("NLog", "4.3.10")
+                            ),
                             emptyList(),
                             true
                         )
@@ -61,7 +67,9 @@ class MSBuildProjectDeserializerTest {
                                 Reference("nunit.engine.api", "3.0.0.0"),
                                 Reference("System", "*"),
                                 Reference("System.Data", "*"),
-                                Reference("System.Xml", "*")
+                                Reference("System.Xml", "*"),
+                                Reference("jQuery", "3.1.1"),
+                                Reference("NLog", "4.3.10")
                             )
                         )
                     )
@@ -78,7 +86,9 @@ class MSBuildProjectDeserializerTest {
                             emptyList(),
                             listOf(
                                 Reference("Microsoft.NET.Sdk", "1.0.0-alpha-20161104-2"),
-                                Reference("Microsoft.NET.Test.Sdk", "15.0.0-preview-20161024-02")
+                                Reference("Microsoft.NET.Test.Sdk", "15.0.0-preview-20161024-02"),
+                                Reference("jQuery", "3.1.1"),
+                                Reference("NLog", "4.3.10")
                             )
                         )
                     )
@@ -93,7 +103,10 @@ class MSBuildProjectDeserializerTest {
                             listOf(Configuration("Release")),
                             emptyList(),
                             emptyList(),
-                            emptyList(),
+                            listOf(
+                                Reference("jQuery", "3.1.1"),
+                                Reference("NLog", "4.3.10")
+                            ),
                             listOf(
                                 Target("GetNuGet"),
                                 Target("Build"),
@@ -114,7 +127,9 @@ class MSBuildProjectDeserializerTest {
                             emptyList(),
                             listOf(
                                 Reference("Microsoft.NET.Sdk", "1.0.0-alpha-20161104-2"),
-                                Reference("Microsoft.NET.Test.Sdk", "15.0.0-preview-20161024-02")
+                                Reference("Microsoft.NET.Test.Sdk", "15.0.0-preview-20161024-02"),
+                                Reference("jQuery", "3.1.1"),
+                                Reference("NLog", "4.3.10")
                             )
                         )
                     )
@@ -132,7 +147,11 @@ class MSBuildProjectDeserializerTest {
                                 Framework("netstandard1.3")
                             ),
                             emptyList(),
-                            listOf(Reference("Newtonsoft.Json", "10.0.3"))
+                            listOf(
+                                Reference("Newtonsoft.Json", "10.0.3"),
+                                Reference("jQuery", "3.1.1"),
+                                Reference("NLog", "4.3.10")
+                            )
                         )
                     )
                 )
@@ -144,7 +163,13 @@ class MSBuildProjectDeserializerTest {
     fun shouldDeserialize(target: String, expectedSolution: Solution) {
         // Given
         val path = "projectPath"
-        val streamFactory = StreamFactoryStub().add(path, this::class.java.getResourceAsStream(target))
+        val packagesConfigPath = "packages.config"
+        val streamFactory =
+            StreamFactoryStub()
+            .add(path, this::class.java.getResourceAsStream(target))
+            .add(packagesConfigPath, this::class.java.getResourceAsStream("/packages.config"))
+
+
         val deserializer =
             MSBuildProjectDeserializer(XmlDocumentServiceImpl())
 
