@@ -2,15 +2,16 @@ package org.jetbrains.dotnet.discovery
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.nio.file.Path
 
 class SolutionDiscoverImpl(
     private val _discoverers: List<SolutionDeserializer>
 ) : SolutionDiscover {
 
-    override fun discover(streamFactory: StreamFactory, paths: Sequence<String>): Sequence<Solution> =
+    override fun discover(streamFactory: StreamFactory, paths: Sequence<Path>): Sequence<Solution> =
         paths.map { createSolutionSource(streamFactory, it) }.flatMap { it }
 
-    private fun createSolutionSource(streamFactory: StreamFactory, path: String): Sequence<Solution> = sequence {
+    private fun createSolutionSource(streamFactory: StreamFactory, path: Path): Sequence<Solution> = sequence {
         LOG.debug("Discover \"$path\"")
         for (discoverer in _discoverers) {
             if (!discoverer.accept(path)) {

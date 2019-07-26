@@ -5,6 +5,7 @@ import org.jetbrains.dotnet.discovery.*
 import org.testng.Assert
 import org.testng.annotations.DataProvider
 import org.testng.annotations.Test
+import java.nio.file.Path
 
 class JsonProjectDeserializerTest {
     @DataProvider
@@ -40,7 +41,7 @@ class JsonProjectDeserializerTest {
     @Test(dataProvider = "testDeserializeData")
     fun shouldDeserialize(target: String, expectedSolution: Solution) {
         // Given
-        val path = "projectPath"
+        val path = Path.of("projectPath")
         val streamFactory = StreamFactoryStub().add(path, this::class.java.getResourceAsStream(target))
         val deserializer =
             JsonProjectDeserializer(ReaderFactoryImpl())
@@ -73,12 +74,13 @@ class JsonProjectDeserializerTest {
     }
 
     @Test(dataProvider = "testAcceptData")
-    fun shouldAccept(path: String, expectedAccepted: Boolean) {
+    fun shouldAccept(stringPath: String, expectedAccepted: Boolean) {
         // Given
         val deserializer =
             JsonProjectDeserializer(ReaderFactoryImpl())
 
         // When
+        val path = Path.of(stringPath)
         val actualAccepted = deserializer.accept(path)
 
         // Then

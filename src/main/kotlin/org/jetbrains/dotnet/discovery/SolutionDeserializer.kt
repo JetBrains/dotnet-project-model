@@ -1,7 +1,9 @@
 package org.jetbrains.dotnet.discovery
 
-interface SolutionDeserializer {
-    fun accept(path: String): Boolean
+import java.nio.file.Path
 
-    fun deserialize(path: String, streamFactory: StreamFactory): Solution
+interface SolutionDeserializer {
+    fun accept(path: Path): Boolean
+
+    fun deserialize(path: Path, streamFactory: StreamFactory): Solution
 }

@@ -3,7 +3,9 @@ package org.jetbrains.dotnet.discovery
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
+import org.jetbrains.dotnet.common.toUnixString
 import org.jetbrains.dotnet.discovery.Reference.Companion.DEFAULT_VERSION
+import java.nio.file.Path
 import java.util.regex.Pattern
 
 class JsonProjectDeserializer(
@@ -17,16 +19,14 @@ class JsonProjectDeserializer(
         _gson = builder.create()
     }
 
-    override fun accept(path: String): Boolean = PathPattern.matcher(path).find()
+    override fun accept(path: Path): Boolean = PathPattern.matcher(path.toUnixString()).find()
 
-    override fun deserialize(path: String, streamFactory: StreamFactory): Solution =
+    override fun deserialize(path: Path, streamFactory: StreamFactory): Solution =
         streamFactory.tryCreate(path)?.use {
             _readerFactory.create(it).use {
                 val project = _gson.fromJson(it, JsonProjectDto::class.java)
                 val configurations = project.configurations?.keys?.map {
-                    Configuration(
-                        it
-                    )
+                    Configuration(it)
                 } ?: emptyList()
                 val frameworks = project.frameworks?.keys?.map { Framework(it) } ?: emptyList()
                 val runtimes = project.runtimes?.keys?.map { Runtime(it) } ?: emptyList()
@@ -44,7 +44,7 @@ class JsonProjectDeserializer(
                 Solution(
                     listOf(
                         Project(
-                            path,
+                            path.toUnixString(),
                             configurations,
                             frameworks,
                             runtimes,

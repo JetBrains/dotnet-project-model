@@ -6,6 +6,7 @@ import org.jetbrains.dotnet.discovery.Target
 import org.testng.Assert
 import org.testng.annotations.DataProvider
 import org.testng.annotations.Test
+import java.nio.file.Path
 
 class MSBuildProjectDeserializerTest {
     @DataProvider
@@ -162,8 +163,8 @@ class MSBuildProjectDeserializerTest {
     @Test(dataProvider = "testDeserializeData")
     fun shouldDeserialize(target: String, expectedSolution: Solution) {
         // Given
-        val path = "projectPath"
-        val packagesConfigPath = "packages.config"
+        val path = Path.of("projectPath")
+        val packagesConfigPath = Path.of("packages.config")
         val streamFactory =
             StreamFactoryStub()
             .add(path, this::class.java.getResourceAsStream(target))
@@ -208,12 +209,13 @@ class MSBuildProjectDeserializerTest {
     }
 
     @Test(dataProvider = "testAcceptData")
-    fun shouldAccept(path: String, expectedAccepted: Boolean) {
+    fun shouldAccept(stringPath: String, expectedAccepted: Boolean) {
         // Given
         val deserializer =
             MSBuildProjectDeserializer(XmlDocumentServiceImpl())
 
         // When
+        val path = Path.of(stringPath)
         val actualAccepted = deserializer.accept(path)
 
         // Then

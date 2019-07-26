@@ -1,14 +1,17 @@
 package org.jetbrains.dotnet.discovery
 
+import org.jetbrains.dotnet.common.normalizeSystem
+import org.jetbrains.dotnet.common.toUnixString
+import java.nio.file.Path
 import java.util.regex.Pattern
 
 class MSBuildSolutionDeserializer(
     private val _readerFactory: ReaderFactory,
     private val _msBuildProjectDeserializer: SolutionDeserializer
 ) : SolutionDeserializer {
-    override fun accept(path: String): Boolean = PathPattern.matcher(path).find()
+    override fun accept(path: Path): Boolean = PathPattern.matcher(path.toUnixString()).find()
 
-    override fun deserialize(path: String, streamFactory: StreamFactory): Solution =
+    override fun deserialize(path: Path, streamFactory: StreamFactory): Solution =
         streamFactory.tryCreate(path)?.use {
             _readerFactory.create(it).use {
                 val projects = it
@@ -17,7 +20,7 @@ class MSBuildSolutionDeserializer(
                     .mapNotNull { ProjectPathPattern.matcher(it) }
                     .filter { it.find() }
                     .flatMap {
-                        val projectPath = normalizePath(path, it.group(1))
+                        val projectPath = getProjectPath(path, Path.of(it.group(1)))
                         if (_msBuildProjectDeserializer.accept(projectPath)) {
                             _msBuildProjectDeserializer.deserialize(projectPath, streamFactory)
                                 .projects.asSequence()
@@ -28,18 +31,13 @@ class MSBuildSolutionDeserializer(
                     .distinctBy { it.project }
                     .toList()
 
-                Solution(projects, path)
+                Solution(projects, path.toUnixString())
             }
         } ?: Solution(emptyList())
 
-    fun normalizePath(basePath: String, path: String): String {
-        val baseParent = basePath.replace('\\', '/').split('/').reversed().drop(1).reversed().joinToString("/")
-        val normalizedPath = path.replace('\\', '/')
-        if (baseParent.isBlank()) {
-            return normalizedPath
-        }
-
-        return "$baseParent/$normalizedPath"
+    fun getProjectPath(basePath: Path, path: Path): Path {
+        val baseParent = basePath.normalizeSystem().parent ?: Path.of("")
+        return baseParent.resolve(path.normalizeSystem())
     }
 
     private companion object {

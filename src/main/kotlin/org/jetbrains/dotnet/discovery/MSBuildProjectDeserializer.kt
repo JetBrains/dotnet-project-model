@@ -2,6 +2,7 @@ package org.jetbrains.dotnet.discovery
 
 
 import org.jetbrains.dotnet.common.XmlDocumentService
+import org.jetbrains.dotnet.common.toUnixString
 import org.jetbrains.dotnet.discovery.Reference.Companion.DEFAULT_VERSION
 import org.w3c.dom.Document
 import org.w3c.dom.Element
@@ -16,13 +17,13 @@ import javax.xml.xpath.XPathFactory
 class MSBuildProjectDeserializer(
     private val _xmlDocumentService: XmlDocumentService
 ) : SolutionDeserializer {
-    override fun accept(path: String): Boolean = PathPattern.matcher(path).find()
+    override fun accept(path: Path): Boolean = PathPattern.matcher(path.toUnixString()).find()
 
-    override fun deserialize(path: String, streamFactory: StreamFactory): Solution =
+    override fun deserialize(path: Path, streamFactory: StreamFactory): Solution =
         streamFactory.tryCreate(path)?.use {
             val doc = _xmlDocumentService.deserialize(it)
 
-            val packagesConfigPath = Paths.get(Path.of(path).parent?.toString() ?: ".", "packages.config").toString()
+            val packagesConfigPath = Paths.get(path.parent?.toString() ?: "", "packages.config")
 
             val packagesConfig = streamFactory.tryCreate(packagesConfigPath)?.use {
                 loadPackagesConfig(_xmlDocumentService.deserialize(it))
@@ -80,7 +81,7 @@ class MSBuildProjectDeserializer(
             Solution(
                 listOf(
                     Project(
-                        path,
+                        path.toUnixString(),
                         configurations,
                         frameworks,
                         runtimes,

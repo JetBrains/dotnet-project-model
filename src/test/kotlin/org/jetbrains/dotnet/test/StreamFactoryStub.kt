@@ -1,5 +1,6 @@
 package org.jetbrains.dotnet.test
 
+import org.jetbrains.dotnet.common.toUnixString
 import org.jetbrains.dotnet.discovery.StreamFactory
 import java.io.InputStream
 import java.nio.file.Path
@@ -7,14 +8,12 @@ import java.nio.file.Path
 class StreamFactoryStub : StreamFactory {
     private val _streams: MutableMap<String, InputStream> = mutableMapOf()
 
-    fun add(path: String, inputStream: InputStream): StreamFactoryStub {
-        _streams[normalize(path)] = inputStream
+    fun add(path: Path, inputStream: InputStream): StreamFactoryStub {
+        _streams[path.toUnixString()] = inputStream
         return this
     }
 
-    private fun normalize(path: String) = Path.of(path).normalize().toString()
-
-    override fun tryCreate(path: String): InputStream? {
-        return _streams[normalize(path)]
+    override fun tryCreate(path: Path): InputStream? {
+        return _streams[path.toUnixString()]
     }
 }
