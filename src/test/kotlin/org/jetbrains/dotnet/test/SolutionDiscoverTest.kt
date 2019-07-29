@@ -14,7 +14,7 @@ class SolutionDiscoverTest {
         val path1 = Path.of("projectPath1/aaa.sln")
         val path2 = Path.of("projectPath2/proj.sln")
 
-        val streamFactory = StreamFactoryStub()
+        val streamFactory = ProjectStreamFactoryStub()
         val ctx = Mockery()
         val deserializer1 = ctx.mock(SolutionDeserializer::class.java, "deserializer1")
         val deserializer2 = ctx.mock(SolutionDeserializer::class.java, "deserializer2")

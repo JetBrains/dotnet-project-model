@@ -42,7 +42,7 @@ class JsonProjectDeserializerTest {
     fun shouldDeserialize(target: String, expectedSolution: Solution) {
         // Given
         val path = Path.of("projectPath")
-        val streamFactory = StreamFactoryStub().add(path, this::class.java.getResourceAsStream(target))
+        val streamFactory = ProjectStreamFactoryStub().add(path, this::class.java.getResourceAsStream(target))
         val deserializer =
             JsonProjectDeserializer(ReaderFactoryImpl())
 

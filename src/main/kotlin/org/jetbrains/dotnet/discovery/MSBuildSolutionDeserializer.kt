@@ -11,8 +11,8 @@ class MSBuildSolutionDeserializer(
 ) : SolutionDeserializer {
     override fun accept(path: Path): Boolean = PathPattern.matcher(path.toUnixString()).find()
 
-    override fun deserialize(path: Path, streamFactory: StreamFactory): Solution =
-        streamFactory.tryCreate(path)?.use {
+    override fun deserialize(path: Path, projectStreamFactory: ProjectStreamFactory): Solution =
+        projectStreamFactory.tryCreate(path)?.use {
             _readerFactory.create(it).use {
                 val projects = it
                     .readLines()
@@ -22,7 +22,7 @@ class MSBuildSolutionDeserializer(
                     .flatMap {
                         val projectPath = getProjectPath(path, Path.of(it.group(1)))
                         if (_msBuildProjectDeserializer.accept(projectPath)) {
-                            _msBuildProjectDeserializer.deserialize(projectPath, streamFactory)
+                            _msBuildProjectDeserializer.deserialize(projectPath, projectStreamFactory)
                                 .projects.asSequence()
                         } else {
                             emptySequence()

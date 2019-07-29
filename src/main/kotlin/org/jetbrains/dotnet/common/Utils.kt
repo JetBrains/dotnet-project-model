@@ -4,6 +4,7 @@ import org.apache.commons.io.FilenameUtils
 import java.nio.file.Path
 
 internal fun Path.toUnixString(): String = this.toString().normalizeSystem(true)
+internal fun String.toUnixString(): String = this.normalizeSystem(true)
 
 internal fun String.normalizeSystem(isUnix: Boolean = !isWindows()) =
     FilenameUtils.normalize(this, isUnix)

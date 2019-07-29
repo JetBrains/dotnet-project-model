@@ -5,5 +5,5 @@ import java.nio.file.Path
 interface SolutionDeserializer {
     fun accept(path: Path): Boolean
 
-    fun deserialize(path: Path, streamFactory: StreamFactory): Solution
+    fun deserialize(path: Path, projectStreamFactory: ProjectStreamFactory): Solution
 }

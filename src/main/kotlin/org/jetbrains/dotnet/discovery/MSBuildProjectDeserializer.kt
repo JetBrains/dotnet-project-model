@@ -19,13 +19,13 @@ class MSBuildProjectDeserializer(
 ) : SolutionDeserializer {
     override fun accept(path: Path): Boolean = PathPattern.matcher(path.toUnixString()).find()
 
-    override fun deserialize(path: Path, streamFactory: StreamFactory): Solution =
-        streamFactory.tryCreate(path)?.use {
+    override fun deserialize(path: Path, projectStreamFactory: ProjectStreamFactory): Solution =
+        projectStreamFactory.tryCreate(path)?.use {
             val doc = _xmlDocumentService.deserialize(it)
 
             val packagesConfigPath = Paths.get(path.parent?.toString() ?: "", "packages.config")
 
-            val packagesConfig = streamFactory.tryCreate(packagesConfigPath)?.use {
+            val packagesConfig = projectStreamFactory.tryCreate(packagesConfigPath)?.use {
                 loadPackagesConfig(_xmlDocumentService.deserialize(it))
             } ?: emptySequence()
 
@@ -87,6 +87,7 @@ class MSBuildProjectDeserializer(
                         runtimes,
                         references,
                         targets,
+                        emptyList(),
                         generatePackageOnBuild
                     )
                 )

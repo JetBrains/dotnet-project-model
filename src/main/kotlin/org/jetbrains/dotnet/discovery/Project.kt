@@ -7,5 +7,6 @@ data class Project(
     var runtimes: List<Runtime> = emptyList(),
     val references: List<Reference> = emptyList(),
     val targets: List<Target> = emptyList(),
+    val sources: List<Source> = emptyList(),
     val generatePackageOnBuild: Boolean = false
 )

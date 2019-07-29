@@ -15,7 +15,7 @@ class MSBuildSolutionDeserializerTest {
         // Given
         val target = "/solution.sln"
         val path = Path.of("projectPath/aaa.sln")
-        val streamFactory = StreamFactoryStub().add(path, this::class.java.getResourceAsStream(target))
+        val streamFactory = ProjectStreamFactoryStub().add(path, this::class.java.getResourceAsStream(target))
         val ctx = Mockery()
         val msBuildProjectDeserializer = ctx.mock(SolutionDeserializer::class.java)
 

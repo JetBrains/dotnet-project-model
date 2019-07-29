@@ -47,6 +47,7 @@ class MSBuildProjectDeserializerTest {
                                 Reference("NLog", "4.3.10")
                             ),
                             emptyList(),
+                            emptyList(),
                             true
                         )
                     )
@@ -166,7 +167,7 @@ class MSBuildProjectDeserializerTest {
         val path = Path.of("projectPath")
         val packagesConfigPath = Path.of("packages.config")
         val streamFactory =
-            StreamFactoryStub()
+            ProjectStreamFactoryStub()
             .add(path, this::class.java.getResourceAsStream(target))
             .add(packagesConfigPath, this::class.java.getResourceAsStream("/packages.config"))
 

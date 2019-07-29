@@ -8,10 +8,10 @@ class SolutionDiscoverImpl(
     private val _discoverers: List<SolutionDeserializer>
 ) : SolutionDiscover {
 
-    override fun discover(streamFactory: StreamFactory, paths: Sequence<Path>): Sequence<Solution> =
-        paths.map { createSolutionSource(streamFactory, it) }.flatMap { it }
+    override fun discover(projectStreamFactory: ProjectStreamFactory, paths: Sequence<Path>): Sequence<Solution> =
+        paths.map { createSolutionSource(projectStreamFactory, it) }.flatMap { it }
 
-    private fun createSolutionSource(streamFactory: StreamFactory, path: Path): Sequence<Solution> = sequence {
+    private fun createSolutionSource(projectStreamFactory: ProjectStreamFactory, path: Path): Sequence<Solution> = sequence {
         LOG.debug("Discover \"$path\"")
         for (discoverer in _discoverers) {
             if (!discoverer.accept(path)) {
@@ -20,7 +20,7 @@ class SolutionDiscoverImpl(
 
             LOG.debug("Use discoverer \"$discoverer\" for \"$path\"")
             try {
-                val solution = discoverer.deserialize(path, streamFactory)
+                val solution = discoverer.deserialize(path, projectStreamFactory)
                 LOG.debug("\"$discoverer\" finds \"$solution\"")
                 yield(solution)
                 break

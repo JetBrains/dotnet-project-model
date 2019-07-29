@@ -63,6 +63,7 @@ class ProjectTypeSelectorTest {
             emptyList(),
             references.map { Reference(it.first, it.second) },
             emptyList(),
+            emptyList(),
             generatePackageOnBuild
         )
 }

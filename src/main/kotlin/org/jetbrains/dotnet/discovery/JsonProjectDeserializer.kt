@@ -3,8 +3,11 @@ package org.jetbrains.dotnet.discovery
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
+import com.google.gson.JsonSyntaxException
 import org.jetbrains.dotnet.common.toUnixString
 import org.jetbrains.dotnet.discovery.Reference.Companion.DEFAULT_VERSION
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.nio.file.Path
 import java.util.regex.Pattern
 
@@ -21,10 +24,15 @@ class JsonProjectDeserializer(
 
     override fun accept(path: Path): Boolean = PathPattern.matcher(path.toUnixString()).find()
 
-    override fun deserialize(path: Path, streamFactory: StreamFactory): Solution =
-        streamFactory.tryCreate(path)?.use {
+    override fun deserialize(path: Path, projectStreamFactory: ProjectStreamFactory): Solution =
+        projectStreamFactory.tryCreate(path)?.use {
             _readerFactory.create(it).use {
-                val project = _gson.fromJson(it, JsonProjectDto::class.java)
+                val project = try {
+                    _gson.fromJson(it, JsonProjectDto::class.java)
+                } catch (e: JsonSyntaxException) {
+                    LOG.debug("$path contains invalid json")
+                    return Solution(emptyList())
+                }
                 val configurations = project.configurations?.keys?.map {
                     Configuration(it)
                 } ?: emptyList()
@@ -56,6 +64,7 @@ class JsonProjectDeserializer(
         } ?: Solution(emptyList())
 
     private companion object {
+        private val LOG: Logger = LoggerFactory.getLogger(JsonProjectDeserializer::class.java.name)
         private val PathPattern: Pattern = Pattern.compile("^(.+[^\\w\\d]|)project\\.json$", Pattern.CASE_INSENSITIVE)
     }
 }

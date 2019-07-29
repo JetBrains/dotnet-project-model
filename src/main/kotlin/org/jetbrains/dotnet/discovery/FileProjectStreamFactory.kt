@@ -7,7 +7,7 @@ import java.io.File
 import java.io.InputStream
 import java.nio.file.Path
 
-class FileStreamFactory(private val baseDirectory: File) : StreamFactory {
+class FileProjectStreamFactory(override val baseDirectory: File) : ProjectStreamFactory {
     override fun tryCreate(path: Path): InputStream? {
         val file = File(baseDirectory, path.toUnixString())
         if (!file.exists()) {
