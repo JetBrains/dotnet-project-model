@@ -1,4 +1,4 @@
-package org.jetbrains.dotnet.discovery
+package org.jetbrains.dotnet.discovery.data
 
 data class Project(
     val project: String,

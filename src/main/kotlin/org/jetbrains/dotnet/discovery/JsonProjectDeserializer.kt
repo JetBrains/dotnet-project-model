@@ -5,14 +5,16 @@ import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import com.google.gson.JsonSyntaxException
 import org.jetbrains.dotnet.common.toUnixString
-import org.jetbrains.dotnet.discovery.Reference.Companion.DEFAULT_VERSION
+import org.jetbrains.dotnet.discovery.data.*
+import org.jetbrains.dotnet.discovery.data.Reference.Companion.DEFAULT_VERSION
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
 import java.util.regex.Pattern
 
 class JsonProjectDeserializer(
-    private val _readerFactory: ReaderFactory
+    private val _readerFactory: ReaderFactory,
+    private val sourceDiscoverer: NuGetConfigDiscoverer? = null
 ) : SolutionDeserializer {
 
     private val _gson: Gson
@@ -49,6 +51,8 @@ class JsonProjectDeserializer(
                     Reference(name, version)
                 } ?: emptyList()
 
+                val sources = sourceDiscoverer?.discover(path, projectStreamFactory)?.toList() ?: emptyList()
+
                 Solution(
                     listOf(
                         Project(
@@ -56,7 +60,8 @@ class JsonProjectDeserializer(
                             configurations,
                             frameworks,
                             runtimes,
-                            references
+                            references,
+                            sources = sources
                         )
                     )
                 )

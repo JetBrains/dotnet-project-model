@@ -16,11 +16,11 @@ class ProjectDto(
     @SerializedName("frameworks") val frameworks: Map<String, DependenciesDto>?
 )
 
-class DependenciesDto (
+class DependenciesDto(
     @SerializedName("dependencies") val dependencies:  Map<String, Any>?
 )
 
 class RestoreDto(
     @SerializedName("projectPath") val projectPath : String?,
-    @SerializedName("sources") val sources : Map<String, Any>?
+    @SerializedName("configFilePaths") val configs : List<String>?
 )

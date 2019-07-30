@@ -1,7 +1,12 @@
 package org.jetbrains.dotnet.test
 
 
-import org.jetbrains.dotnet.discovery.*
+import org.jetbrains.dotnet.common.XmlDocumentServiceImpl
+import org.jetbrains.dotnet.discovery.JsonProjectDeserializer
+import org.jetbrains.dotnet.discovery.NuGetConfigDeserializer
+import org.jetbrains.dotnet.discovery.NuGetConfigDiscoverer
+import org.jetbrains.dotnet.discovery.ReaderFactoryImpl
+import org.jetbrains.dotnet.discovery.data.*
 import org.testng.Assert
 import org.testng.annotations.DataProvider
 import org.testng.annotations.Test
@@ -30,7 +35,12 @@ class JsonProjectDeserializerTest {
                                 Framework("dnxcore50")
                             ),
                             emptyList(),
-                            referencies
+                            referencies,
+                            sources = listOf(
+                                Source("nuget.org", "https://api.nuget.org/v3/index.json", "nuget.config"),
+                                Source("Contoso", "https://contoso.com/packages/", "nuget.config"),
+                                Source("Test Source", "c:\\packages", "nuget.config")
+                            )
                         )
                     )
                 )
@@ -42,9 +52,13 @@ class JsonProjectDeserializerTest {
     fun shouldDeserialize(target: String, expectedSolution: Solution) {
         // Given
         val path = Path.of("projectPath")
-        val streamFactory = ProjectStreamFactoryStub().add(path, this::class.java.getResourceAsStream(target))
+        val config = "/nuget.config"
+        val streamFactory = ProjectStreamFactoryStub()
+            .add(path, this::class.java.getResourceAsStream(target))
+            .add(Path.of("nuget.config"), this::class.java.getResourceAsStream(config))
+
         val deserializer =
-            JsonProjectDeserializer(ReaderFactoryImpl())
+            JsonProjectDeserializer(ReaderFactoryImpl(), NuGetConfigDiscoverer(NuGetConfigDeserializer(XmlDocumentServiceImpl())))
 
         // When
         val actualSolution = deserializer.deserialize(path, streamFactory)

@@ -1,7 +1,14 @@
 package org.jetbrains.dotnet.test
 
-import org.jetbrains.dotnet.discovery.*
-import org.jetbrains.dotnet.discovery.Target
+import org.jetbrains.dotnet.common.XmlDocumentServiceImpl
+import org.jetbrains.dotnet.discovery.JsonAssetsProjectDeserializer
+import org.jetbrains.dotnet.discovery.NuGetConfigDeserializer
+import org.jetbrains.dotnet.discovery.NuGetConfigDiscoverer
+import org.jetbrains.dotnet.discovery.ReaderFactoryImpl
+import org.jetbrains.dotnet.discovery.data.Framework
+import org.jetbrains.dotnet.discovery.data.Reference
+import org.jetbrains.dotnet.discovery.data.Source
+import org.jetbrains.dotnet.discovery.data.Target
 import org.testng.Assert.assertEquals
 import org.testng.Assert.assertTrue
 import org.testng.annotations.DataProvider
@@ -14,10 +21,14 @@ class JsonAssetsProjectDeserializerTest {
     fun shouldDeserialize() {
         // Given
         val target = "/project.assets.json"
+        val config = "/nuget.config"
         val path = Path.of("./project.assets.json")
-        val streamFactory = ProjectStreamFactoryStub().add(path, this::class.java.getResourceAsStream(target))
+        val streamFactory = ProjectStreamFactoryStub()
+            .add(path, this::class.java.getResourceAsStream(target))
+            .add(Path.of("/Users/mikhail.nikolyukin/.config/NuGet/NuGet.Config"), this::class.java.getResourceAsStream(config))
+
         val deserializer =
-            JsonAssetsProjectDeserializer(ReaderFactoryImpl())
+            JsonAssetsProjectDeserializer(ReaderFactoryImpl(), NuGetConfigDiscoverer(NuGetConfigDeserializer(XmlDocumentServiceImpl())))
 
         // When
         val actualSolution = deserializer.deserialize(path, streamFactory)
@@ -29,12 +40,21 @@ class JsonAssetsProjectDeserializerTest {
         assertEquals(project.frameworks, listOf(Framework("netcoreapp2.2")))
         assertEquals(project.targets, listOf(Target(".NETCoreApp,Version=v2.2")))
         assertTrue(project.references.toSet().containsAll( listOf(
-            Reference("AutoMapper", "8.1.1", listOf(
-                Reference("Microsoft.CSharp", "4.5.0"),
-                Reference("System.Reflection.Emit", "4.3.0")
-            ), true),
+            Reference(
+                "AutoMapper", "8.1.1", listOf(
+                    Reference("Microsoft.CSharp", "4.5.0"),
+                    Reference("System.Reflection.Emit", "4.3.0")
+                ), true
+            ),
             Reference("NuGet.Versioning", "5.1.0", emptyList(), false)
         )))
+        assertEquals(project.sources,
+            listOf(
+                Source("nuget.org", "https://api.nuget.org/v3/index.json", "/Users/mikhail.nikolyukin/.config/NuGet/NuGet.Config"),
+                Source("Contoso", "https://contoso.com/packages/", "/Users/mikhail.nikolyukin/.config/NuGet/NuGet.Config"),
+                Source("Test Source", "c:\\packages", "/Users/mikhail.nikolyukin/.config/NuGet/NuGet.Config")
+            )
+        )
     }
 
     @DataProvider

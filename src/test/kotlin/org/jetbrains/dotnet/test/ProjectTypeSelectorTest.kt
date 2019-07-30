@@ -1,9 +1,9 @@
 package org.jetbrains.dotnet.test
 
-import org.jetbrains.dotnet.discovery.Project
 import org.jetbrains.dotnet.discovery.ProjectType
 import org.jetbrains.dotnet.discovery.ProjectTypeSelectorImpl
-import org.jetbrains.dotnet.discovery.Reference
+import org.jetbrains.dotnet.discovery.data.Project
+import org.jetbrains.dotnet.discovery.data.Reference
 import org.testng.Assert
 import org.testng.annotations.DataProvider
 import org.testng.annotations.Test

@@ -1,22 +1,23 @@
 package org.jetbrains.dotnet.discovery
 
 
+import org.jetbrains.dotnet.common.XPathReader
 import org.jetbrains.dotnet.common.XmlDocumentService
 import org.jetbrains.dotnet.common.toUnixString
-import org.jetbrains.dotnet.discovery.Reference.Companion.DEFAULT_VERSION
+import org.jetbrains.dotnet.discovery.data.*
+import org.jetbrains.dotnet.discovery.data.Reference.Companion.DEFAULT_VERSION
+import org.jetbrains.dotnet.discovery.data.Target
 import org.w3c.dom.Document
 import org.w3c.dom.Element
-import org.w3c.dom.NodeList
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.regex.Pattern
 import java.util.regex.Pattern.CASE_INSENSITIVE
-import javax.xml.xpath.XPathConstants
-import javax.xml.xpath.XPathFactory
 
 class MSBuildProjectDeserializer(
-    private val _xmlDocumentService: XmlDocumentService
-) : SolutionDeserializer {
+    private val _xmlDocumentService: XmlDocumentService,
+    private val sourceDiscoverer: NuGetConfigDiscoverer? = null
+) : XPathReader(), SolutionDeserializer {
     override fun accept(path: Path): Boolean = PathPattern.matcher(path.toUnixString()).find()
 
     override fun deserialize(path: Path, projectStreamFactory: ProjectStreamFactory): Solution =
@@ -78,6 +79,8 @@ class MSBuildProjectDeserializer(
                 .filter { "true".equals(it.trim(), true) }
                 .any()
 
+            val sources = sourceDiscoverer?.discover(path, projectStreamFactory)?.toList() ?: emptyList()
+
             Solution(
                 listOf(
                     Project(
@@ -87,30 +90,16 @@ class MSBuildProjectDeserializer(
                         runtimes,
                         references,
                         targets,
-                        emptyList(),
+                        sources,
                         generatePackageOnBuild
                     )
                 )
             )
         } ?: Solution(emptyList())
 
-    private fun getElements(doc: Document, xpath: String): Sequence<Element> = sequence {
-        val nodes = xPath.evaluate(xpath, doc, XPathConstants.NODESET) as NodeList
-        for (i in 0 until nodes.length) {
-            val element = nodes.item(i) as Element
-            yield(element)
-        }
-    }
-
-    private fun getContents(doc: Document, xpath: String): Sequence<String> =
-        getElements(doc, xpath).map { it.textContent }.filter { !it.isNullOrBlank() }
-
-    private fun getAttributes(doc: Document, xpath: String, attributeName: String): Sequence<String> =
-        getElements(doc, xpath).map { it.getAttribute(attributeName) }.filter { !it.isNullOrBlank() }
-
     private fun getPackageReferences(doc: Document, xpath: String): Sequence<Reference> =
         getElements(doc, xpath)
-            .map { Reference(it.getAttribute("Include") ?: "", getVersion(it))}
+            .map { Reference(it.getAttribute("Include") ?: "", getVersion(it)) }
             .filter { it.id.isNotEmpty() }
 
     private fun getVersion(element: Element): String {
@@ -127,10 +116,13 @@ class MSBuildProjectDeserializer(
 
     private fun loadPackagesConfig(doc: Document): Sequence<Reference> =
         getElements(doc, "/packages/package")
-            .map { Reference(it.getAttribute("id") ?: "", it.getAttribute("version") ?: DEFAULT_VERSION) }
+            .map {
+                Reference(
+                    it.getAttribute("id") ?: "",
+                    it.getAttribute("version") ?: DEFAULT_VERSION
+                )
+            }
             .filter { it.id.isNotBlank() }
-
-    private val xPath = XPathFactory.newInstance().newXPath()
 
     companion object {
         private val ConditionPattern: Regex =

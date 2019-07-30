@@ -1,5 +1,6 @@
 package org.jetbrains.dotnet.discovery
 
+import org.jetbrains.dotnet.discovery.data.Solution
 import java.nio.file.Path
 
 interface SolutionDiscover {

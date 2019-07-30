@@ -4,14 +4,17 @@ import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
 import org.jetbrains.dotnet.common.normalizeSystem
 import org.jetbrains.dotnet.common.toUnixString
-import org.jetbrains.dotnet.discovery.Reference.Companion.DEFAULT_VERSION
+import org.jetbrains.dotnet.discovery.data.*
+import org.jetbrains.dotnet.discovery.data.Reference.Companion.DEFAULT_VERSION
+import org.jetbrains.dotnet.discovery.data.Target
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
 import java.util.regex.Pattern
 
 class JsonAssetsProjectDeserializer(
-    private val readerFactory: ReaderFactory
+    private val readerFactory: ReaderFactory,
+    private val sourceDiscoverer: NuGetConfigDiscoverer? = null
 ) : SolutionDeserializer {
 
     private val gson: Gson = Gson()
@@ -38,9 +41,9 @@ class JsonAssetsProjectDeserializer(
                 val references = doc.targets?.values
                     ?.flatMap { it.entries }
                     ?.map { (id, pkg) ->
-                        val splitedId = id.split("/")
-                        val name = splitedId[0]
-                        val version = splitedId.getOrNull(1) ?: DEFAULT_VERSION
+                        val splinteredId = id.split("/")
+                        val name = splinteredId[0]
+                        val version = splinteredId.getOrNull(1) ?: DEFAULT_VERSION
                         val dependencies = pkg.dependencies?.entries
                             ?.map { (name, ver) -> Reference(name, ver) } ?: emptyList()
 
@@ -50,17 +53,20 @@ class JsonAssetsProjectDeserializer(
 
                 val frameworks = doc.project?.frameworks?.keys?.map { Framework(it) } ?: emptyList()
 
-                val fullPathToConfig = Path.of(doc.project?.restore?.projectPath?.normalizeSystem()) ?: path
-                val pathToConfig = fullPathToConfig
-                    .toFile()
-                    .relativeToOrSelf(projectStreamFactory.baseDirectory.absoluteFile)
+                val fullPathToConfig = doc.project?.restore?.projectPath ?: path.toUnixString()
 
-                val sources = doc.project?.restore?.sources?.keys?.map { Source(it) } ?: emptyList()
+                val configs = doc.project?.restore?.configs
+
+
+                val sources = sourceDiscoverer?.let { discoverer ->
+                    configs?.asSequence()?.flatMap { discoverer.deserializer.deserialize(Path.of(it.normalizeSystem()), projectStreamFactory) }?.toList()
+                    ?: discoverer.discover(path, projectStreamFactory).toList()
+                } ?: emptyList()
 
                 Solution(
                     listOf(
                         Project(
-                            pathToConfig.path,
+                            fullPathToConfig,
                             targets = targets,
                             references = references,
                             frameworks = frameworks,

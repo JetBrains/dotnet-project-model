@@ -1,6 +1,8 @@
 package org.jetbrains.dotnet.test
 
-import org.jetbrains.dotnet.discovery.*
+import org.jetbrains.dotnet.discovery.SolutionDeserializer
+import org.jetbrains.dotnet.discovery.SolutionDiscoverImpl
+import org.jetbrains.dotnet.discovery.data.*
 import org.jmock.Expectations
 import org.jmock.Mockery
 import org.testng.Assert

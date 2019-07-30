@@ -1,7 +1,10 @@
 package org.jetbrains.dotnet.test
 
 import org.jetbrains.dotnet.common.toUnixString
-import org.jetbrains.dotnet.discovery.*
+import org.jetbrains.dotnet.discovery.MSBuildSolutionDeserializer
+import org.jetbrains.dotnet.discovery.ReaderFactoryImpl
+import org.jetbrains.dotnet.discovery.SolutionDeserializer
+import org.jetbrains.dotnet.discovery.data.*
 import org.jmock.Expectations
 import org.jmock.Mockery
 import org.testng.Assert
@@ -58,7 +61,10 @@ class MSBuildSolutionDeserializerTest {
             )
         )
         val expectedSolution =
-            Solution(solution1.projects.plus(solution2.projects), path.toUnixString())
+            Solution(
+                solution1.projects.plus(solution2.projects),
+                path.toUnixString()
+            )
 
         ctx.checking(object : Expectations() {
             init {

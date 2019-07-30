@@ -2,6 +2,7 @@ package org.jetbrains.dotnet.discovery
 
 import org.jetbrains.dotnet.common.normalizeSystem
 import org.jetbrains.dotnet.common.toUnixString
+import org.jetbrains.dotnet.discovery.data.Solution
 import java.nio.file.Path
 import java.util.regex.Pattern
 

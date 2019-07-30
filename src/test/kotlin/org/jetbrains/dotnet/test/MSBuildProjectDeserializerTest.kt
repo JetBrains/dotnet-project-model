@@ -1,12 +1,16 @@
 package org.jetbrains.dotnet.test
 
 import org.jetbrains.dotnet.common.XmlDocumentServiceImpl
-import org.jetbrains.dotnet.discovery.*
-import org.jetbrains.dotnet.discovery.Target
+import org.jetbrains.dotnet.discovery.MSBuildProjectDeserializer
+import org.jetbrains.dotnet.discovery.NuGetConfigDeserializer
+import org.jetbrains.dotnet.discovery.NuGetConfigDiscoverer
+import org.jetbrains.dotnet.discovery.data.*
+import org.jetbrains.dotnet.discovery.data.Target
 import org.testng.Assert
 import org.testng.annotations.DataProvider
 import org.testng.annotations.Test
 import java.nio.file.Path
+import java.util.*
 
 class MSBuildProjectDeserializerTest {
     @DataProvider
@@ -14,6 +18,7 @@ class MSBuildProjectDeserializerTest {
         return arrayOf(
             arrayOf(
                 "/project-runtime.csproj",
+                Optional.empty<String>(),
                 Solution(
                     listOf(
                         Project(
@@ -35,6 +40,7 @@ class MSBuildProjectDeserializerTest {
             ),
             arrayOf(
                 "/GeneratePackageOnBuild.csproj",
+                Optional.empty<String>(),
                 Solution(
                     listOf(
                         Project(
@@ -55,6 +61,7 @@ class MSBuildProjectDeserializerTest {
             ),
             arrayOf(
                 "/project14.csproj",
+                Optional.of("/nuget.config"),
                 Solution(
                     listOf(
                         Project(
@@ -72,6 +79,11 @@ class MSBuildProjectDeserializerTest {
                                 Reference("System.Xml", "*"),
                                 Reference("jQuery", "3.1.1"),
                                 Reference("NLog", "4.3.10")
+                            ),
+                            sources = listOf(
+                                Source("nuget.org", "https://api.nuget.org/v3/index.json", "nuget.config"),
+                                Source("Contoso", "https://contoso.com/packages/", "nuget.config"),
+                                Source("Test Source", "c:\\packages", "nuget.config")
                             )
                         )
                     )
@@ -79,6 +91,7 @@ class MSBuildProjectDeserializerTest {
             ),
             arrayOf(
                 "/project.csproj",
+                Optional.empty<String>(),
                 Solution(
                     listOf(
                         Project(
@@ -87,8 +100,14 @@ class MSBuildProjectDeserializerTest {
                             listOf(Framework("netcoreapp1.0")),
                             emptyList(),
                             listOf(
-                                Reference("Microsoft.NET.Sdk", "1.0.0-alpha-20161104-2"),
-                                Reference("Microsoft.NET.Test.Sdk", "15.0.0-preview-20161024-02"),
+                                Reference(
+                                    "Microsoft.NET.Sdk",
+                                    "1.0.0-alpha-20161104-2"
+                                ),
+                                Reference(
+                                    "Microsoft.NET.Test.Sdk",
+                                    "15.0.0-preview-20161024-02"
+                                ),
                                 Reference("jQuery", "3.1.1"),
                                 Reference("NLog", "4.3.10")
                             )
@@ -98,6 +117,7 @@ class MSBuildProjectDeserializerTest {
             ),
             arrayOf(
                 "/build.proj",
+                Optional.empty<String>(),
                 Solution(
                     listOf(
                         Project(
@@ -120,6 +140,7 @@ class MSBuildProjectDeserializerTest {
             ),
             arrayOf(
                 "/project-simplified.csproj",
+                Optional.empty<String>(),
                 Solution(
                     listOf(
                         Project(
@@ -128,8 +149,14 @@ class MSBuildProjectDeserializerTest {
                             listOf(Framework("netcoreapp1.0")),
                             emptyList(),
                             listOf(
-                                Reference("Microsoft.NET.Sdk", "1.0.0-alpha-20161104-2"),
-                                Reference("Microsoft.NET.Test.Sdk", "15.0.0-preview-20161024-02"),
+                                Reference(
+                                    "Microsoft.NET.Sdk",
+                                    "1.0.0-alpha-20161104-2"
+                                ),
+                                Reference(
+                                    "Microsoft.NET.Test.Sdk",
+                                    "15.0.0-preview-20161024-02"
+                                ),
                                 Reference("jQuery", "3.1.1"),
                                 Reference("NLog", "4.3.10")
                             )
@@ -139,6 +166,7 @@ class MSBuildProjectDeserializerTest {
             ),
             arrayOf(
                 "/project-frameworks.csproj",
+                Optional.empty<String>(),
                 Solution(
                     listOf(
                         Project(
@@ -162,7 +190,7 @@ class MSBuildProjectDeserializerTest {
     }
 
     @Test(dataProvider = "testDeserializeData")
-    fun shouldDeserialize(target: String, expectedSolution: Solution) {
+    fun shouldDeserialize(target: String, config: Optional<String>, expectedSolution: Solution) {
         // Given
         val path = Path.of("projectPath")
         val packagesConfigPath = Path.of("packages.config")
@@ -171,9 +199,10 @@ class MSBuildProjectDeserializerTest {
             .add(path, this::class.java.getResourceAsStream(target))
             .add(packagesConfigPath, this::class.java.getResourceAsStream("/packages.config"))
 
+        config.ifPresent { streamFactory.add(Path.of("nuget.config"), this::class.java.getResourceAsStream(it)) }
 
         val deserializer =
-            MSBuildProjectDeserializer(XmlDocumentServiceImpl())
+            MSBuildProjectDeserializer(XmlDocumentServiceImpl(), NuGetConfigDiscoverer(NuGetConfigDeserializer(XmlDocumentServiceImpl())))
 
         // When
         val actualSolution = deserializer.deserialize(path, streamFactory)
