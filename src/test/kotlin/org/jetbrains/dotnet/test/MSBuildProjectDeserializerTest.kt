@@ -233,7 +233,6 @@ class MSBuildProjectDeserializerTest {
             arrayOf("proj", false),
             arrayOf("csproj", false),
             arrayOf("VBproj", false),
-            arrayOf("   ", false),
             arrayOf("", false)
         )
     }

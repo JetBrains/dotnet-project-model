@@ -82,7 +82,6 @@ class JsonProjectDeserializerTest {
             arrayOf("10rer323project.json", false),
             arrayOf(".json", false),
             arrayOf("json", false),
-            arrayOf("  ", false),
             arrayOf("", false)
         )
     }
