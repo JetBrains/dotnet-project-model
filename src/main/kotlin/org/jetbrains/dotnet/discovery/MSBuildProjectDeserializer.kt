@@ -3,7 +3,7 @@ package org.jetbrains.dotnet.discovery
 
 import org.jetbrains.dotnet.common.XPathReader
 import org.jetbrains.dotnet.common.XmlDocumentService
-import org.jetbrains.dotnet.common.toUnixString
+import org.jetbrains.dotnet.common.toNormalizedUnixString
 import org.jetbrains.dotnet.discovery.data.*
 import org.jetbrains.dotnet.discovery.data.Reference.Companion.DEFAULT_VERSION
 import org.jetbrains.dotnet.discovery.data.Target
@@ -18,7 +18,7 @@ class MSBuildProjectDeserializer(
     private val _xmlDocumentService: XmlDocumentService,
     private val sourceDiscoverer: NuGetConfigDiscoverer? = null
 ) : XPathReader(), SolutionDeserializer {
-    override fun accept(path: Path): Boolean = PathPattern.matcher(path.toUnixString()).find()
+    override fun accept(path: Path): Boolean = PathPattern.matcher(path.toNormalizedUnixString()).find()
 
     override fun deserialize(path: Path, projectStreamFactory: ProjectStreamFactory): Solution =
         projectStreamFactory.tryCreate(path)?.use {
@@ -84,7 +84,7 @@ class MSBuildProjectDeserializer(
             Solution(
                 listOf(
                     Project(
-                        path.toUnixString(),
+                        path.toNormalizedUnixString(),
                         configurations,
                         frameworks,
                         runtimes,

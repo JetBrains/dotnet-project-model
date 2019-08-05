@@ -2,8 +2,8 @@ package org.jetbrains.dotnet.discovery
 
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
-import org.jetbrains.dotnet.common.normalizeSystem
-import org.jetbrains.dotnet.common.toUnixString
+import org.jetbrains.dotnet.common.toNormalizedUnixString
+import org.jetbrains.dotnet.common.toSystem
 import org.jetbrains.dotnet.discovery.data.*
 import org.jetbrains.dotnet.discovery.data.Reference.Companion.DEFAULT_VERSION
 import org.jetbrains.dotnet.discovery.data.Target
@@ -19,7 +19,7 @@ class JsonAssetsProjectDeserializer(
 
     private val gson: Gson = Gson()
 
-    override fun accept(path: Path): Boolean = PathPattern.matcher(path.toUnixString()).find()
+    override fun accept(path: Path): Boolean = PathPattern.matcher(path.toNormalizedUnixString()).find()
 
     override fun deserialize(path: Path, projectStreamFactory: ProjectStreamFactory): Solution =
         projectStreamFactory.tryCreate(path)?.use { inputStream ->
@@ -53,13 +53,13 @@ class JsonAssetsProjectDeserializer(
 
                 val frameworks = doc.project?.frameworks?.keys?.map { Framework(it) } ?: emptyList()
 
-                val fullPathToConfig = doc.project?.restore?.projectPath ?: path.toUnixString()
+                val fullPathToConfig = doc.project?.restore?.projectPath ?: path.toNormalizedUnixString()
 
                 val configs = doc.project?.restore?.configs
 
 
                 val sources = sourceDiscoverer?.let { discoverer ->
-                    configs?.asSequence()?.flatMap { discoverer.deserializer.deserialize(Path.of(it.normalizeSystem()), projectStreamFactory) }?.toList()
+                    configs?.asSequence()?.flatMap { discoverer.deserializer.deserialize(Path.of(it.toSystem()), projectStreamFactory) }?.toList()
                     ?: discoverer.discover(path, projectStreamFactory).toList()
                 } ?: emptyList()
 

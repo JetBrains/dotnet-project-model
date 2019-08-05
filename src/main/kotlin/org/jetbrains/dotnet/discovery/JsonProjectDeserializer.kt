@@ -4,7 +4,7 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import com.google.gson.JsonSyntaxException
-import org.jetbrains.dotnet.common.toUnixString
+import org.jetbrains.dotnet.common.toNormalizedUnixString
 import org.jetbrains.dotnet.discovery.data.*
 import org.jetbrains.dotnet.discovery.data.Reference.Companion.DEFAULT_VERSION
 import org.slf4j.Logger
@@ -24,7 +24,7 @@ class JsonProjectDeserializer(
         _gson = builder.create()
     }
 
-    override fun accept(path: Path): Boolean = PathPattern.matcher(path.toUnixString()).find()
+    override fun accept(path: Path): Boolean = PathPattern.matcher(path.toNormalizedUnixString()).find()
 
     override fun deserialize(path: Path, projectStreamFactory: ProjectStreamFactory): Solution =
         projectStreamFactory.tryCreate(path)?.use {
@@ -56,7 +56,7 @@ class JsonProjectDeserializer(
                 Solution(
                     listOf(
                         Project(
-                            path.toUnixString(),
+                            path.toNormalizedUnixString(),
                             configurations,
                             frameworks,
                             runtimes,

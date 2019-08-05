@@ -1,6 +1,6 @@
 package org.jetbrains.dotnet.test
 
-import org.jetbrains.dotnet.common.toUnixString
+import org.jetbrains.dotnet.common.toNormalizedUnixString
 import org.jetbrains.dotnet.discovery.MSBuildSolutionDeserializer
 import org.jetbrains.dotnet.discovery.ReaderFactoryImpl
 import org.jetbrains.dotnet.discovery.SolutionDeserializer
@@ -63,7 +63,7 @@ class MSBuildSolutionDeserializerTest {
         val expectedSolution =
             Solution(
                 solution1.projects.plus(solution2.projects),
-                path.toUnixString()
+                path.toNormalizedUnixString()
             )
 
         ctx.checking(object : Expectations() {
@@ -164,6 +164,6 @@ class MSBuildSolutionDeserializerTest {
         val actualPath = deserializer.getProjectPath(Path.of(basePath), Path.of(path))
 
         // Then
-        Assert.assertEquals(actualPath.toUnixString(), expectedPath)
+        Assert.assertEquals(actualPath.toNormalizedUnixString(), expectedPath)
     }
 }
