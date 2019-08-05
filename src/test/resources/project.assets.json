@@ -3934,19 +3934,19 @@
     ]
   },
   "packageFolders": {
-    "/Users/mikhail.nikolyukin/.nuget/packages/": {}
+    "/Users/username/.nuget/packages/": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/Users/mikhail.nikolyukin/RiderProjects/ConsoleApp1/ConsoleApp1/ConsoleApp1.csproj",
+      "projectUniqueName": "/Users/username/RiderProjects/ConsoleApp1/ConsoleApp1/ConsoleApp1.csproj",
       "projectName": "ConsoleApp1",
-      "projectPath": "/Users/mikhail.nikolyukin/RiderProjects/ConsoleApp1/ConsoleApp1/ConsoleApp1.csproj",
-      "packagesPath": "/Users/mikhail.nikolyukin/.nuget/packages/",
-      "outputPath": "/Users/mikhail.nikolyukin/RiderProjects/ConsoleApp1/ConsoleApp1/obj/",
+      "projectPath": "/Users/username/RiderProjects/ConsoleApp1/ConsoleApp1/ConsoleApp1.csproj",
+      "packagesPath": "/Users/username/.nuget/packages/",
+      "outputPath": "/Users/username/RiderProjects/ConsoleApp1/ConsoleApp1/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "/Users/mikhail.nikolyukin/.config/NuGet/NuGet.Config"
+        "/Users/username/.config/NuGet/NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "netcoreapp2.2"

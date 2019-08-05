@@ -25,7 +25,7 @@ class JsonAssetsProjectDeserializerTest {
         val path = Path.of("./project.assets.json")
         val streamFactory = ProjectStreamFactoryStub()
             .add(path, this::class.java.getResourceAsStream(target))
-            .add(Path.of("/Users/mikhail.nikolyukin/.config/NuGet/NuGet.Config"), this::class.java.getResourceAsStream(config))
+            .add(Path.of("/Users/username/.config/NuGet/NuGet.Config"), this::class.java.getResourceAsStream(config))
 
         val deserializer =
             JsonAssetsProjectDeserializer(ReaderFactoryImpl(), NuGetConfigDiscoverer(NuGetConfigDeserializer(XmlDocumentServiceImpl())))
@@ -50,9 +50,9 @@ class JsonAssetsProjectDeserializerTest {
         )))
         assertEquals(project.sources,
             listOf(
-                Source("nuget.org", "https://api.nuget.org/v3/index.json", "/Users/mikhail.nikolyukin/.config/NuGet/NuGet.Config"),
-                Source("Contoso", "https://contoso.com/packages/", "/Users/mikhail.nikolyukin/.config/NuGet/NuGet.Config"),
-                Source("Test Source", "c:\\packages", "/Users/mikhail.nikolyukin/.config/NuGet/NuGet.Config")
+                Source("nuget.org", "https://api.nuget.org/v3/index.json", "/Users/username/.config/NuGet/NuGet.Config"),
+                Source("Contoso", "https://contoso.com/packages/", "/Users/username/.config/NuGet/NuGet.Config"),
+                Source("Test Source", "c:\\packages", "/Users/username/.config/NuGet/NuGet.Config")
             )
         )
     }
