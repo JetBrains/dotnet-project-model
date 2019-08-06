@@ -4,6 +4,7 @@ import org.jetbrains.dotnet.common.toNormalizedUnixString
 import org.jetbrains.dotnet.common.toSystem
 import org.jetbrains.dotnet.discovery.data.Solution
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.regex.Pattern
 
 class MSBuildSolutionDeserializer(
@@ -21,7 +22,7 @@ class MSBuildSolutionDeserializer(
                     .mapNotNull { ProjectPathPattern.matcher(it) }
                     .filter { it.find() }
                     .flatMap {
-                        val projectPath = getProjectPath(path, Path.of(it.group(1)))
+                        val projectPath = getProjectPath(path, Paths.get(it.group(1)))
                         if (_msBuildProjectDeserializer.accept(projectPath)) {
                             _msBuildProjectDeserializer.deserialize(projectPath, projectStreamFactory)
                                 .projects.asSequence()
@@ -37,7 +38,7 @@ class MSBuildSolutionDeserializer(
         } ?: Solution(emptyList())
 
     fun getProjectPath(basePath: Path, path: Path): Path {
-        val baseParent = basePath.toSystem().parent ?: Path.of("")
+        val baseParent = basePath.toSystem().parent ?: Paths.get("")
         return baseParent.resolve(path.toSystem())
     }
 

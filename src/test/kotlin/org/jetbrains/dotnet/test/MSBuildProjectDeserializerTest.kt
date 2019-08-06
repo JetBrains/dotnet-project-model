@@ -9,7 +9,7 @@ import org.jetbrains.dotnet.discovery.data.Target
 import org.testng.Assert
 import org.testng.annotations.DataProvider
 import org.testng.annotations.Test
-import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.*
 
 class MSBuildProjectDeserializerTest {
@@ -192,14 +192,14 @@ class MSBuildProjectDeserializerTest {
     @Test(dataProvider = "testDeserializeData")
     fun shouldDeserialize(target: String, config: Optional<String>, expectedSolution: Solution) {
         // Given
-        val path = Path.of("projectPath")
-        val packagesConfigPath = Path.of("packages.config")
+        val path = Paths.get("projectPath")
+        val packagesConfigPath = Paths.get("packages.config")
         val streamFactory =
             ProjectStreamFactoryStub()
             .add(path, this::class.java.getResourceAsStream(target))
             .add(packagesConfigPath, this::class.java.getResourceAsStream("/packages.config"))
 
-        config.ifPresent { streamFactory.add(Path.of("nuget.config"), this::class.java.getResourceAsStream(it)) }
+        config.ifPresent { streamFactory.add(Paths.get("nuget.config"), this::class.java.getResourceAsStream(it)) }
 
         val deserializer =
             MSBuildProjectDeserializer(XmlDocumentServiceImpl(), NuGetConfigDiscoverer(NuGetConfigDeserializer(XmlDocumentServiceImpl())))
@@ -244,7 +244,7 @@ class MSBuildProjectDeserializerTest {
             MSBuildProjectDeserializer(XmlDocumentServiceImpl())
 
         // When
-        val path = Path.of(stringPath)
+        val path = Paths.get(stringPath)
         val actualAccepted = deserializer.accept(path)
 
         // Then

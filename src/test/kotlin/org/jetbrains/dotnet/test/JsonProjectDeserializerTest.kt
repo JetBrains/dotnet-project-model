@@ -10,7 +10,7 @@ import org.jetbrains.dotnet.discovery.data.*
 import org.testng.Assert
 import org.testng.annotations.DataProvider
 import org.testng.annotations.Test
-import java.nio.file.Path
+import java.nio.file.Paths
 
 class JsonProjectDeserializerTest {
     @DataProvider
@@ -51,11 +51,11 @@ class JsonProjectDeserializerTest {
     @Test(dataProvider = "testDeserializeData")
     fun shouldDeserialize(target: String, expectedSolution: Solution) {
         // Given
-        val path = Path.of("projectPath")
+        val path = Paths.get("projectPath")
         val config = "/nuget.config"
         val streamFactory = ProjectStreamFactoryStub()
             .add(path, this::class.java.getResourceAsStream(target))
-            .add(Path.of("nuget.config"), this::class.java.getResourceAsStream(config))
+            .add(Paths.get("nuget.config"), this::class.java.getResourceAsStream(config))
 
         val deserializer =
             JsonProjectDeserializer(ReaderFactoryImpl(), NuGetConfigDiscoverer(NuGetConfigDeserializer(XmlDocumentServiceImpl())))
@@ -93,7 +93,7 @@ class JsonProjectDeserializerTest {
             JsonProjectDeserializer(ReaderFactoryImpl())
 
         // When
-        val path = Path.of(stringPath)
+        val path = Paths.get(stringPath)
         val actualAccepted = deserializer.accept(path)
 
         // Then

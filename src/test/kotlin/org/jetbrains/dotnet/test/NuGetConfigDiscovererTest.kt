@@ -7,7 +7,7 @@ import org.jetbrains.dotnet.discovery.data.Source
 import org.testng.Assert.assertEquals
 import org.testng.annotations.DataProvider
 import org.testng.annotations.Test
-import java.nio.file.Path
+import java.nio.file.Paths
 
 class NuGetConfigDiscovererTest {
 
@@ -35,7 +35,7 @@ class NuGetConfigDiscovererTest {
     fun testDiscover(path: String, configs: List<Pair<String, String>>, expectedSources: Set<String>) {
         val streamFactory = ProjectStreamFactoryStub()
         configs.forEach {
-            streamFactory.add(Path.of(it.second), this::class.java.getResourceAsStream(it.first))
+            streamFactory.add(Paths.get(it.second), this::class.java.getResourceAsStream(it.first))
         }
         val discoverer =
             NuGetConfigDiscoverer(
@@ -46,7 +46,7 @@ class NuGetConfigDiscovererTest {
 
 
         // When
-        val actualSolution = discoverer.discover(Path.of(path), streamFactory).toSet()
+        val actualSolution = discoverer.discover(Paths.get(path), streamFactory).toSet()
 
         // Then
         assertEquals(actualSolution, expectedSources)

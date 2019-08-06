@@ -10,6 +10,7 @@ import org.jetbrains.dotnet.discovery.data.Target
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.regex.Pattern
 
 class JsonAssetsProjectDeserializer(
@@ -59,7 +60,7 @@ class JsonAssetsProjectDeserializer(
 
 
                 val sources = sourceDiscoverer?.let { discoverer ->
-                    configs?.asSequence()?.flatMap { discoverer.deserializer.deserialize(Path.of(it.toSystem()), projectStreamFactory) }?.toList()
+                    configs?.asSequence()?.flatMap { discoverer.deserializer.deserialize(Paths.get(it.toSystem()), projectStreamFactory) }?.toList()
                     ?: discoverer.discover(path, projectStreamFactory).toList()
                 } ?: emptyList()
 

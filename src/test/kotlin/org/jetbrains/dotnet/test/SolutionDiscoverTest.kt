@@ -7,14 +7,14 @@ import org.jmock.Expectations
 import org.jmock.Mockery
 import org.testng.Assert
 import org.testng.annotations.Test
-import java.nio.file.Path
+import java.nio.file.Paths
 
 class SolutionDiscoverTest {
     @Test
     fun shouldDiscover() {
         // Given
-        val path1 = Path.of("projectPath1/aaa.sln")
-        val path2 = Path.of("projectPath2/proj.sln")
+        val path1 = Paths.get("projectPath1/aaa.sln")
+        val path2 = Paths.get("projectPath2/proj.sln")
 
         val streamFactory = ProjectStreamFactoryStub()
         val ctx = Mockery()

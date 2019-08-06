@@ -13,7 +13,7 @@ import org.testng.Assert.assertEquals
 import org.testng.Assert.assertTrue
 import org.testng.annotations.DataProvider
 import org.testng.annotations.Test
-import java.nio.file.Path
+import java.nio.file.Paths
 
 class JsonAssetsProjectDeserializerTest {
 
@@ -22,10 +22,10 @@ class JsonAssetsProjectDeserializerTest {
         // Given
         val target = "/project.assets.json"
         val config = "/nuget.config"
-        val path = Path.of("./project.assets.json")
+        val path = Paths.get("./project.assets.json")
         val streamFactory = ProjectStreamFactoryStub()
             .add(path, this::class.java.getResourceAsStream(target))
-            .add(Path.of("/Users/username/.config/NuGet/NuGet.Config"), this::class.java.getResourceAsStream(config))
+            .add(Paths.get("/Users/username/.config/NuGet/NuGet.Config"), this::class.java.getResourceAsStream(config))
 
         val deserializer =
             JsonAssetsProjectDeserializer(ReaderFactoryImpl(), NuGetConfigDiscoverer(NuGetConfigDeserializer(XmlDocumentServiceImpl())))
@@ -83,7 +83,7 @@ class JsonAssetsProjectDeserializerTest {
             JsonAssetsProjectDeserializer(ReaderFactoryImpl())
 
         // When
-        val path = Path.of(stringPath)
+        val path = Paths.get(stringPath)
         val actualAccepted = deserializer.accept(path)
 
         // Then

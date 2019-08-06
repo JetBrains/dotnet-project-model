@@ -1,6 +1,7 @@
 package org.jetbrains.dotnet.common
 
 import java.nio.file.Path
+import java.nio.file.Paths
 
 internal fun Path.toNormalizedUnixString(): String = this.normalize().toString().toSystem(true)
 
@@ -10,7 +11,7 @@ internal fun String.toSystem(isUnix: Boolean = !isWindows()): String {
 }
 
 internal fun Path.toSystem(isUnix: Boolean = !isWindows()) =
-    Path.of(this.toString().toSystem(isUnix))
+    Paths.get(this.toString().toSystem(isUnix))
 
 
 private fun isWindows(): Boolean {
