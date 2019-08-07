@@ -27,19 +27,23 @@ class JsonProjectDeserializer(
     override fun accept(path: Path): Boolean = PathPattern.matcher(path.toNormalizedUnixString()).find()
 
     override fun deserialize(path: Path, projectStreamFactory: ProjectStreamFactory): Solution =
-        projectStreamFactory.tryCreate(path)?.use {
-            _readerFactory.create(it).use {
+        projectStreamFactory.tryCreate(path)?.use { stream ->
+            _readerFactory.create(stream).use { reader ->
                 val project = try {
-                    _gson.fromJson(it, JsonProjectDto::class.java)
+                    _gson.fromJson(reader, JsonProjectDto::class.java)
                 } catch (e: JsonSyntaxException) {
                     LOG.debug("$path contains invalid json")
                     return Solution(emptyList())
                 }
+
                 val configurations = project.configurations?.keys?.map {
                     Configuration(it)
                 } ?: emptyList()
+
                 val frameworks = project.frameworks?.keys?.map { Framework(it) } ?: emptyList()
+
                 val runtimes = project.runtimes?.keys?.map { Runtime(it) } ?: emptyList()
+
                 val references = project.dependencies?.mapNotNull { (name, info) ->
                     val version = when(info) {
                         is String -> info
@@ -48,7 +52,7 @@ class JsonProjectDeserializer(
                         }
                         else -> null
                     } ?: DEFAULT_VERSION
-                    Reference(name, version)
+                    Reference(name, version, path.toNormalizedUnixString())
                 } ?: emptyList()
 
                 val sources = sourceDiscoverer?.discover(path, projectStreamFactory)?.toList() ?: emptyList()

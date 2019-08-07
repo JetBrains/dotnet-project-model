@@ -23,6 +23,7 @@ class JsonAssetsProjectDeserializerTest {
         val target = "/project.assets.json"
         val config = "/nuget.config"
         val path = Paths.get("./project.assets.json")
+        val projectPath = "/Users/username/RiderProjects/ConsoleApp1/ConsoleApp1/ConsoleApp1.csproj"
         val streamFactory = ProjectStreamFactoryStub()
             .add(path, this::class.java.getResourceAsStream(target))
             .add(Paths.get("/Users/username/.config/NuGet/NuGet.Config"), this::class.java.getResourceAsStream(config))
@@ -41,18 +42,20 @@ class JsonAssetsProjectDeserializerTest {
         assertEquals(project.targets, listOf(Target(".NETCoreApp,Version=v2.2")))
         assertTrue(project.references.toSet().containsAll( listOf(
             Reference(
-                "AutoMapper", "8.1.1", listOf(
-                    Reference("Microsoft.CSharp", "4.5.0"),
-                    Reference("System.Reflection.Emit", "4.3.0")
+                "AutoMapper", "8.1.1", projectPath, listOf(
+                    Reference("Microsoft.CSharp", "4.5.0", projectPath),
+                    Reference("System.Reflection.Emit", "4.3.0", projectPath)
                 ), true
             ),
-            Reference("NuGet.Versioning", "5.1.0", emptyList(), false)
+            Reference("NuGet.Versioning", "5.1.0", projectPath, emptyList(), false)
         )))
+
+        val configPath = "/Users/username/.config/NuGet/NuGet.Config"
         assertEquals(project.sources,
             listOf(
-                Source("nuget.org", "https://api.nuget.org/v3/index.json", "/Users/username/.config/NuGet/NuGet.Config"),
-                Source("Contoso", "https://contoso.com/packages/", "/Users/username/.config/NuGet/NuGet.Config"),
-                Source("Test Source", "c:\\packages", "/Users/username/.config/NuGet/NuGet.Config")
+                Source("nuget.org", "https://api.nuget.org/v3/index.json", configPath),
+                Source("Contoso", "https://contoso.com/packages/", configPath),
+                Source("Test Source", "c:\\packages",configPath)
             )
         )
     }

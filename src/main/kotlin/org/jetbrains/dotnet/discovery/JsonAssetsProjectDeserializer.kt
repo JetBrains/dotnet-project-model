@@ -32,7 +32,10 @@ class JsonAssetsProjectDeserializer(
                     return Solution(emptyList())
                 }
 
+                val fullPathToConfig = doc.project?.restore?.projectPath?.let { Paths.get(it) } ?: path
+
                 val targets = doc.targets?.keys?.map { Target(it) } ?: emptyList()
+
                 val roots : Set<String> = doc.project?.frameworks?.values
                     ?.flatMap {
                         it.dependencies?.keys ?: emptySet()
@@ -46,15 +49,13 @@ class JsonAssetsProjectDeserializer(
                         val name = splinteredId[0]
                         val version = splinteredId.getOrNull(1) ?: DEFAULT_VERSION
                         val dependencies = pkg.dependencies?.entries
-                            ?.map { (name, ver) -> Reference(name, ver) } ?: emptyList()
+                            ?.map { (name, ver) -> Reference(name, ver, fullPathToConfig.toNormalizedUnixString()) } ?: emptyList()
 
                         val isRoot = roots.contains(name)
-                        Reference(name, version, dependencies, isRoot)
+                        Reference(name, version, fullPathToConfig.toNormalizedUnixString(), dependencies, isRoot)
                      } ?: emptyList()
 
                 val frameworks = doc.project?.frameworks?.keys?.map { Framework(it) } ?: emptyList()
-
-                val fullPathToConfig = doc.project?.restore?.projectPath ?: path.toNormalizedUnixString()
 
                 val configs = doc.project?.restore?.configs
 
@@ -67,7 +68,7 @@ class JsonAssetsProjectDeserializer(
                 Solution(
                     listOf(
                         Project(
-                            fullPathToConfig,
+                            fullPathToConfig.toNormalizedUnixString(),
                             targets = targets,
                             references = references,
                             frameworks = frameworks,

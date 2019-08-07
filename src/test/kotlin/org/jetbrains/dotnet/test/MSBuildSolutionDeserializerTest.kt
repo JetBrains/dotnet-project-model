@@ -39,7 +39,7 @@ class MSBuildSolutionDeserializerTest {
                         Runtime("win-7x86"),
                         Runtime("ubuntu.16.10-x64")
                     ),
-                    listOf(Reference("Microsoft.NET.Sdk", "*"))
+                    listOf(Reference("Microsoft.NET.Sdk", "*", "projectPath1"))
                 )
             )
         )
@@ -54,8 +54,8 @@ class MSBuildSolutionDeserializerTest {
                         Runtime("win-7x86")
                     ),
                     listOf(
-                        Reference("Microsoft.NET.sdk", "*"),
-                        Reference("Microsoft.NET.test.sdk", "*")
+                        Reference("Microsoft.NET.sdk", "*", "projectPath2"),
+                        Reference("Microsoft.NET.test.sdk", "*", "projectPath2")
                     )
                 )
             )

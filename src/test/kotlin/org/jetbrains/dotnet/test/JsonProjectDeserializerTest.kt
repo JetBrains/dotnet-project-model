@@ -20,7 +20,8 @@ class JsonProjectDeserializerTest {
             "Microsoft.AspNet.DependencyInjection" to "0.1-alpha-*",
             "Microsoft.AspNet.Logging" to "0.1-alpha-*",
             "System.Data.Common" to "0.1-alpha-*"
-        ).map { Reference(it) }
+        ).map { Reference(it.first, it.second, "projectPath") }
+        val configPath = "nuget.config"
 
         return arrayOf(
             arrayOf(
@@ -37,9 +38,9 @@ class JsonProjectDeserializerTest {
                             emptyList(),
                             referencies,
                             sources = listOf(
-                                Source("nuget.org", "https://api.nuget.org/v3/index.json", "nuget.config"),
-                                Source("Contoso", "https://contoso.com/packages/", "nuget.config"),
-                                Source("Test Source", "c:\\packages", "nuget.config")
+                                Source("nuget.org", "https://api.nuget.org/v3/index.json", configPath),
+                                Source("Contoso", "https://contoso.com/packages/", configPath),
+                                Source("Test Source", "c:\\packages", configPath)
                             )
                         )
                     )

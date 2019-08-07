@@ -21,13 +21,14 @@ class MSBuildProjectDeserializer(
     override fun accept(path: Path): Boolean = PathPattern.matcher(path.toNormalizedUnixString()).find()
 
     override fun deserialize(path: Path, projectStreamFactory: ProjectStreamFactory): Solution =
-        projectStreamFactory.tryCreate(path)?.use {
-            val doc = _xmlDocumentService.deserialize(it)
+        projectStreamFactory.tryCreate(path)?.use { stream ->
+            val doc = _xmlDocumentService.deserialize(stream)
 
             val packagesConfigPath = Paths.get(path.parent?.toString() ?: "", "packages.config")
 
-            val packagesConfig = projectStreamFactory.tryCreate(packagesConfigPath)?.use {
-                loadPackagesConfig(_xmlDocumentService.deserialize(it))
+            val packagesConfig = projectStreamFactory.tryCreate(packagesConfigPath)?.use { packageConfigDoc ->
+                loadPackagesConfig(_xmlDocumentService.deserialize(packageConfigDoc))
+                    .map { Reference(it.first, it.second, packagesConfigPath.toNormalizedUnixString()) }
             } ?: emptySequence()
 
             val configurations = getAttributes(doc, "/Project/*[@Condition]", "Condition")
@@ -53,6 +54,7 @@ class MSBuildProjectDeserializer(
                 .toList()
 
             val references = getPackageReferences(doc, "/Project/ItemGroup/PackageReference[@Include]")
+                .map { Reference(it.first, it.second, path.toNormalizedUnixString()) }
                 .plus(
                     getAttributes(doc, "/Project/ItemGroup/Reference[@Include]", "Include")
                         .map {
@@ -62,7 +64,7 @@ class MSBuildProjectDeserializer(
                                 .mapNotNull { versionPattern.find(it)?.groupValues?.get(1) }
                                 .firstOrNull() ?: DEFAULT_VERSION
 
-                            Reference(id, version)
+                            Reference(id, version, path.toNormalizedUnixString())
                         }
                 )
                 .plus(packagesConfig)
@@ -97,10 +99,10 @@ class MSBuildProjectDeserializer(
             )
         } ?: Solution(emptyList())
 
-    private fun getPackageReferences(doc: Document, xpath: String): Sequence<Reference> =
+    private fun getPackageReferences(doc: Document, xpath: String): Sequence<Pair<String, String>> =
         getElements(doc, xpath)
-            .map { Reference(it.getAttribute("Include") ?: "", getVersion(it)) }
-            .filter { it.id.isNotEmpty() }
+            .map { Pair(it.getAttribute("Include") ?: "", getVersion(it)) }
+            .filter { it.first.isNotEmpty() }
 
     private fun getVersion(element: Element): String {
         val rawVersion = when {
@@ -114,15 +116,15 @@ class MSBuildProjectDeserializer(
         }
     }
 
-    private fun loadPackagesConfig(doc: Document): Sequence<Reference> =
+    private fun loadPackagesConfig(doc: Document): Sequence<Pair<String, String>> =
         getElements(doc, "/packages/package")
             .map {
-                Reference(
+                Pair(
                     it.getAttribute("id") ?: "",
                     it.getAttribute("version") ?: DEFAULT_VERSION
                 )
             }
-            .filter { it.id.isNotBlank() }
+            .filter { it.first.isNotBlank() }
 
     companion object {
         private val ConditionPattern: Regex =
