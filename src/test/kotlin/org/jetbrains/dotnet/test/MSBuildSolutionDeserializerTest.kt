@@ -116,7 +116,6 @@ class MSBuildSolutionDeserializerTest {
             arrayOf("abc.proj", false),
             arrayOf(".sln", false),
             arrayOf("sln", false),
-            arrayOf("  ", false),
             arrayOf("", false)
         )
     }
