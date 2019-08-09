@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     kotlin("jvm") version "1.3.41"
     `maven-publish`
+    id("com.jfrog.bintray") version "1.8.0"
 }
 
 
@@ -15,12 +16,30 @@ val sourcesJar by tasks.registering(Jar::class) {
     from(sourceSets.main.get().allSource)
 }
 
+val publicationName = "Lib"
+
 publishing {
     publications {
-        register<MavenPublication>("mavenJava") {
+        create<MavenPublication>(publicationName) {
             from(components["java"])
             artifact(sourcesJar.get())
         }
+    }
+}
+
+bintray {
+    user = if (project.hasProperty("bintrayUser"))  project.property("bintrayUser") as String? else System.getenv("BINTRAY_USER")
+    key = if (project.hasProperty("bintrayApiKey"))  project.property("bintrayApiKey") as String? else System.getenv("BINTRAY_API_KEY")
+    publish = true
+    setPublications(publicationName)
+    setConfigurations("archives")
+    pkg.apply {
+        repo = "libraries"
+        name = "dotnet-project-model"
+        userOrg = user
+        setLicenses("Apache-2.0")
+        setLabels("kotlin")
+        vcsUrl = "https://github.com/JetBrains/dotnet-project-model.git"
     }
 }
 
