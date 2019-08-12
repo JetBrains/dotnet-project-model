@@ -8,9 +8,10 @@ plugins {
 
 
 val myGroup = "org.jetbrains"
-val myArtifactID = "dotnet-project-model"
+val myArtifactID = rootProject.name
 val currentVersion = findProperty("projectVersion") as? String ?: "1.0-SNAPSHOT"
-
+val description = "Provides project model deserializer for .NET projects"
+val repUrl = "https://github.com/JetBrains/dotnet-project-model"
 group = myGroup
 version = currentVersion
 
@@ -29,6 +30,22 @@ publishing {
             groupId = myGroup
             artifactId = myArtifactID
             version = currentVersion
+
+            pom.withXml {
+                asNode().apply {
+                    appendNode("description", description)
+                    appendNode("name", rootProject.name)
+                    appendNode("url", repUrl)
+                    appendNode("licenses").appendNode("license").apply {
+                        appendNode("name", "The Apache Software License, Version 2.0")
+                        appendNode("url", "http://www.apache.org/licenses/LICENSE-2.0.txt")
+                        appendNode("distribution", "repo")
+                    }
+                    appendNode("scm").apply {
+                        appendNode("url", repUrl)
+                    }
+                }
+            }
         }
     }
 }
