@@ -8,6 +8,7 @@ plugins {
 
 
 val myGroup = "org.jetbrains"
+val myArtifactID = "dotnet-project-model"
 val currentVersion = findProperty("projectVersion") as? String ?: "1.0-SNAPSHOT"
 
 group = myGroup
@@ -25,6 +26,9 @@ publishing {
         create<MavenPublication>(publicationName) {
             from(components["java"])
             artifact(sourcesJar.get())
+            groupId = myGroup
+            artifactId = myArtifactID
+            version = currentVersion
         }
     }
 }
@@ -37,7 +41,7 @@ bintray {
     setConfigurations("archives")
     pkg.apply {
         repo = "libraries"
-        name = "dotnet-project-model"
+        name = myArtifactID
         userOrg = user
         setLicenses("Apache-2.0")
         setLabels("kotlin")
