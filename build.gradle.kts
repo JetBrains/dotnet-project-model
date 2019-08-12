@@ -7,9 +7,11 @@ plugins {
 }
 
 
+val myGroup = "org.jetbrains"
+val currentVersion = findProperty("projectVersion") as? String ?: "1.0-SNAPSHOT"
 
-group = "org.jetbrains"
-version = findProperty("projectVersion") ?: "1.0-SNAPSHOT"
+group = myGroup
+version = currentVersion
 
 val sourcesJar by tasks.registering(Jar::class) {
     archiveClassifier.set("sources")
@@ -41,7 +43,7 @@ bintray {
         setLabels("kotlin")
         vcsUrl = "https://github.com/JetBrains/dotnet-project-model.git"
         version.apply {
-            name = version.name
+            name = currentVersion
         }
     }
 }
