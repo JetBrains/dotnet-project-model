@@ -1,2 +1,2 @@
-rootProject.name = "dotnet-discovery"
+rootProject.name = "dotnet-project-model"
 

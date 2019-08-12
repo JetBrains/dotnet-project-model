@@ -40,6 +40,9 @@ bintray {
         setLicenses("Apache-2.0")
         setLabels("kotlin")
         vcsUrl = "https://github.com/JetBrains/dotnet-project-model.git"
+        version.apply {
+            name = version.name
+        }
     }
 }
 
