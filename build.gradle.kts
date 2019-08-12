@@ -9,7 +9,7 @@ plugins {
 
 
 group = "org.jetbrains"
-version = findProperty "projectVersion" ?: "1.0-SNAPSHOT"
+version = findProperty("projectVersion") ?: "1.0-SNAPSHOT"
 
 val sourcesJar by tasks.registering(Jar::class) {
     archiveClassifier.set("sources")
