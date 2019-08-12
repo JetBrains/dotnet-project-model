@@ -3,7 +3,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     kotlin("jvm") version "1.3.41"
     `maven-publish`
-    id("com.jfrog.bintray") version "1.8.0"
+    id("com.jfrog.bintray") version "1.8.4"
 }
 
 
