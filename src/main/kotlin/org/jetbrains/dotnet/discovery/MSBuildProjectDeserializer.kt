@@ -4,6 +4,7 @@ package org.jetbrains.dotnet.discovery
 import org.jetbrains.dotnet.common.XPathReader
 import org.jetbrains.dotnet.common.XmlDocumentService
 import org.jetbrains.dotnet.common.toNormalizedUnixString
+import org.jetbrains.dotnet.common.toSystem
 import org.jetbrains.dotnet.discovery.data.*
 import org.jetbrains.dotnet.discovery.data.Reference.Companion.DEFAULT_VERSION
 import org.jetbrains.dotnet.discovery.data.Target
@@ -11,14 +12,13 @@ import org.w3c.dom.Document
 import org.w3c.dom.Element
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.regex.Pattern
-import java.util.regex.Pattern.CASE_INSENSITIVE
 
 class MSBuildProjectDeserializer(
     private val _xmlDocumentService: XmlDocumentService,
     private val sourceDiscoverer: NuGetConfigDiscoverer? = null
 ) : XPathReader(), SolutionDeserializer {
-    override fun accept(path: Path): Boolean = PathPattern.matcher(path.toNormalizedUnixString()).find()
+    override fun accept(path: Path): Boolean =
+        supportedConfigs.contains(path.toSystem().toFile().extension.toLowerCase())
 
     override fun deserialize(path: Path, projectStreamFactory: ProjectStreamFactory): Solution =
         projectStreamFactory.tryCreate(path)?.use { stream ->
@@ -129,7 +129,21 @@ class MSBuildProjectDeserializer(
     companion object {
         private val ConditionPattern: Regex =
             Regex("'\\$\\(Configuration\\)([^']*)' == '([^|]*)([^']*)'", RegexOption.IGNORE_CASE)
-        private val PathPattern: Pattern = Pattern.compile("^.+\\.(proj|csproj|vbproj)$", CASE_INSENSITIVE)
         private val versionPattern: Regex = Regex("""^\s*Version\s*=\s*(.*)$""")
+        val supportedConfigs = listOf(
+            "csproj",
+            "vbproj",
+            "vcxproj",
+            "dbproj",
+            "fsproj",
+            "pyproj",
+            "rbproj",
+            "wixproj",
+            "vdproj",
+            "isproj",
+            "pssproj",
+            "modelproj",
+            "proj"
+        )
     }
 }

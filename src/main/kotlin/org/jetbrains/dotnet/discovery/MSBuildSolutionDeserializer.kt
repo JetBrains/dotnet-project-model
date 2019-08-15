@@ -11,7 +11,8 @@ class MSBuildSolutionDeserializer(
     private val _readerFactory: ReaderFactory,
     private val _msBuildProjectDeserializer: SolutionDeserializer
 ) : SolutionDeserializer {
-    override fun accept(path: Path): Boolean = PathPattern.matcher(path.toNormalizedUnixString()).find()
+    override fun accept(path: Path): Boolean =
+        supportedConfigs.contains(path.toSystem().toFile().extension.toLowerCase())
 
     override fun deserialize(path: Path, projectStreamFactory: ProjectStreamFactory): Solution =
         projectStreamFactory.tryCreate(path)?.use {
@@ -47,6 +48,6 @@ class MSBuildSolutionDeserializer(
             "^Project\\(.+\\)\\s*=\\s*\".+\"\\s*,\\s*\"(.+)\"\\s*,\\s*\".+\"\\s*\$",
             Pattern.CASE_INSENSITIVE
         )
-        private val PathPattern: Pattern = Pattern.compile("^.+\\.sln$", Pattern.CASE_INSENSITIVE)
+        val supportedConfigs = listOf("sln")
     }
 }
