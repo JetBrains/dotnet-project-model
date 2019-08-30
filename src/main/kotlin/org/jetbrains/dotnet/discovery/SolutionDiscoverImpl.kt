@@ -22,7 +22,6 @@ class SolutionDiscoverImpl(
             LOG.debug("Use discoverer \"$discoverer\" for \"$path\"")
             try {
                 val solution = discoverer.deserialize(path, projectStreamFactory)
-                LOG.debug("\"$discoverer\" finds \"$solution\"")
                 yield(solution)
                 break
             } catch (ex: Exception) {

@@ -16,7 +16,7 @@ class NuGetConfigDiscoverer(
             result += deserializer.deserialize(possiblePath, projectStreamFactory)
             currPath = currPath.parent
         }
-        return result
+        return result.distinct()
     }
 
 }
