@@ -1,4 +1,4 @@
-package org.jetbrains.dotnet.discovery
+package org.jetbrains.dotnet.discovery.data
 
 data class Project(
     val project: String,
@@ -7,5 +7,6 @@ data class Project(
     var runtimes: List<Runtime> = emptyList(),
     val references: List<Reference> = emptyList(),
     val targets: List<Target> = emptyList(),
+    val sources: List<Source> = emptyList(),
     val generatePackageOnBuild: Boolean = false
 )

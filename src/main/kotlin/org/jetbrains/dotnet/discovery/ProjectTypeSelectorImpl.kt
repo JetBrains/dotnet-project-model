@@ -1,5 +1,6 @@
 package org.jetbrains.dotnet.discovery
 
+import org.jetbrains.dotnet.discovery.data.Project
 import java.util.regex.Pattern
 
 class ProjectTypeSelectorImpl : ProjectTypeSelector {

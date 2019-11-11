@@ -22,7 +22,6 @@ class XmlDocumentServiceImpl : XmlDocumentService {
         } catch (ex: ParserConfigurationException) {
             throw IllegalStateException("Error during creating xml document")
         }
-
         return docBuilder.newDocument()
     }
 

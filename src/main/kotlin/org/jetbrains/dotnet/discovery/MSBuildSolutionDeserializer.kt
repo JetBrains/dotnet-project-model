@@ -1,51 +1,46 @@
 package org.jetbrains.dotnet.discovery
 
+import org.jetbrains.dotnet.common.toNormalizedUnixString
+import org.jetbrains.dotnet.common.toSystem
+import org.jetbrains.dotnet.discovery.data.Solution
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.regex.Pattern
 
 class MSBuildSolutionDeserializer(
     private val _readerFactory: ReaderFactory,
     private val _msBuildProjectDeserializer: SolutionDeserializer
 ) : SolutionDeserializer {
-    override fun accept(path: String): Boolean = PathPattern.matcher(path).find()
+    override fun accept(path: Path): Boolean =
+        supportedConfigs.contains(path.toSystem().toFile().extension.toLowerCase())
 
-    override fun deserialize(path: String, streamFactory: StreamFactory): Solution =
-        streamFactory.tryCreate(path)?.let {
-            it.use {
-                _readerFactory.create(it).use {
-                    val projects = it
-                        .readLines()
-                        .asSequence()
-                        .map { ProjectPathPattern.matcher(it) }
-                        .filter { it.find() }
-                        .map {
-                            it?.let {
-                                val projectPath = normalizePath(path, it.group(1))
-                                if (_msBuildProjectDeserializer.accept(projectPath)) {
-                                    _msBuildProjectDeserializer.deserialize(projectPath, streamFactory)
-                                        .projects.asSequence()
-                                } else {
-                                    emptySequence()
-                                }
-                            } ?: emptySequence()
+    override fun deserialize(path: Path, projectStreamFactory: ProjectStreamFactory): Solution =
+        projectStreamFactory.tryCreate(path)?.use {
+            _readerFactory.create(it).use {
+                val projects = it
+                    .readLines()
+                    .asSequence()
+                    .mapNotNull { ProjectPathPattern.matcher(it) }
+                    .filter { it.find() }
+                    .flatMap {
+                        val projectPath = getProjectPath(path, Paths.get(it.group(1)))
+                        if (_msBuildProjectDeserializer.accept(projectPath)) {
+                            _msBuildProjectDeserializer.deserialize(projectPath, projectStreamFactory)
+                                .projects.asSequence()
+                        } else {
+                            emptySequence()
                         }
-                        .asSequence()
-                        .flatMap { it }
-                        .distinctBy { it.project }
-                        .toList()
+                    }
+                    .distinctBy { it.project }
+                    .toList()
 
-                    Solution(projects, path)
-                }
+                Solution(projects, path.toNormalizedUnixString())
             }
         } ?: Solution(emptyList())
 
-    fun normalizePath(basePath: String, path: String): String {
-        val baseParent = basePath.replace('\\', '/').split('/').reversed().drop(1).reversed().joinToString("/")
-        val normalizedPath = path.replace('\\', '/')
-        if (baseParent.isBlank()) {
-            return normalizedPath
-        }
-
-        return "$baseParent/$normalizedPath"
+    fun getProjectPath(basePath: Path, path: Path): Path {
+        val baseParent = basePath.toSystem().parent ?: Paths.get("")
+        return baseParent.resolve(path.toSystem())
     }
 
     private companion object {
@@ -53,6 +48,6 @@ class MSBuildSolutionDeserializer(
             "^Project\\(.+\\)\\s*=\\s*\".+\"\\s*,\\s*\"(.+)\"\\s*,\\s*\".+\"\\s*\$",
             Pattern.CASE_INSENSITIVE
         )
-        private val PathPattern: Pattern = Pattern.compile("^.+\\.sln$", Pattern.CASE_INSENSITIVE)
+        val supportedConfigs = listOf("sln")
     }
 }

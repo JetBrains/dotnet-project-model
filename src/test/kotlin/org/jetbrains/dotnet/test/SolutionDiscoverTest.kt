@@ -1,19 +1,22 @@
 package org.jetbrains.dotnet.test
 
-import org.jetbrains.dotnet.discovery.*
+import org.jetbrains.dotnet.discovery.SolutionDeserializer
+import org.jetbrains.dotnet.discovery.SolutionDiscoverImpl
+import org.jetbrains.dotnet.discovery.data.*
 import org.jmock.Expectations
 import org.jmock.Mockery
 import org.testng.Assert
 import org.testng.annotations.Test
+import java.nio.file.Paths
 
 class SolutionDiscoverTest {
     @Test
     fun shouldDiscover() {
         // Given
-        val path1 = "projectPath1/aaa.sln"
-        val path2 = "projectPath2/proj.sln"
+        val path1 = Paths.get("projectPath1/aaa.sln")
+        val path2 = Paths.get("projectPath2/proj.sln")
 
-        val streamFactory = StreamFactoryStub()
+        val streamFactory = ProjectStreamFactoryStub()
         val ctx = Mockery()
         val deserializer1 = ctx.mock(SolutionDeserializer::class.java, "deserializer1")
         val deserializer2 = ctx.mock(SolutionDeserializer::class.java, "deserializer2")
@@ -34,7 +37,7 @@ class SolutionDiscoverTest {
                         Runtime("win-7x86"),
                         Runtime("ubuntu.16.10-x64")
                     ),
-                    listOf(Reference("Microsoft.NET.Sdk"))
+                    listOf(Reference("Microsoft.NET.Sdk", "", "projectPath1"))
                 )
             )
         )
@@ -49,8 +52,8 @@ class SolutionDiscoverTest {
                         Runtime("win-7x86")
                     ),
                     listOf(
-                        Reference("Microsoft.NET.sdk"),
-                        Reference("Microsoft.NET.test.sdk")
+                        Reference("Microsoft.NET.sdk", "", "projectPath2"),
+                        Reference("Microsoft.NET.test.sdk", "", "projectPath2")
                     )
                 )
             )

@@ -1,19 +1,24 @@
 package org.jetbrains.dotnet.test
 
-import org.jetbrains.dotnet.discovery.*
+import org.jetbrains.dotnet.common.toNormalizedUnixString
+import org.jetbrains.dotnet.discovery.MSBuildSolutionDeserializer
+import org.jetbrains.dotnet.discovery.ReaderFactoryImpl
+import org.jetbrains.dotnet.discovery.SolutionDeserializer
+import org.jetbrains.dotnet.discovery.data.*
 import org.jmock.Expectations
 import org.jmock.Mockery
 import org.testng.Assert
 import org.testng.annotations.DataProvider
 import org.testng.annotations.Test
+import java.nio.file.Paths
 
 class MSBuildSolutionDeserializerTest {
     @Test
     fun shouldDeserialize() {
         // Given
         val target = "/solution.sln"
-        val path = "projectPath/aaa.sln"
-        val streamFactory = StreamFactoryStub().add(path, this::class.java.getResourceAsStream(target))
+        val path = Paths.get("projectPath/aaa.sln")
+        val streamFactory = ProjectStreamFactoryStub().add(path, this::class.java.getResourceAsStream(target))
         val ctx = Mockery()
         val msBuildProjectDeserializer = ctx.mock(SolutionDeserializer::class.java)
 
@@ -34,7 +39,7 @@ class MSBuildSolutionDeserializerTest {
                         Runtime("win-7x86"),
                         Runtime("ubuntu.16.10-x64")
                     ),
-                    listOf(Reference("Microsoft.NET.Sdk"))
+                    listOf(Reference("Microsoft.NET.Sdk", "*", "projectPath1"))
                 )
             )
         )
@@ -49,36 +54,39 @@ class MSBuildSolutionDeserializerTest {
                         Runtime("win-7x86")
                     ),
                     listOf(
-                        Reference("Microsoft.NET.sdk"),
-                        Reference("Microsoft.NET.test.sdk")
+                        Reference("Microsoft.NET.sdk", "*", "projectPath2"),
+                        Reference("Microsoft.NET.test.sdk", "*", "projectPath2")
                     )
                 )
             )
         )
         val expectedSolution =
-            Solution(solution1.projects.plus(solution2.projects), path)
+            Solution(
+                solution1.projects.plus(solution2.projects),
+                path.toNormalizedUnixString()
+            )
 
         ctx.checking(object : Expectations() {
             init {
-                oneOf<SolutionDeserializer>(msBuildProjectDeserializer).accept("projectPath/proj1.csproj")
+                oneOf<SolutionDeserializer>(msBuildProjectDeserializer).accept(Paths.get("projectPath/proj1.csproj"))
                 will(returnValue(true))
 
                 oneOf<SolutionDeserializer>(msBuildProjectDeserializer).deserialize(
-                    "projectPath/proj1.csproj",
+                    Paths.get("projectPath/proj1.csproj"),
                     streamFactory
                 )
                 will(returnValue(solution1))
 
-                oneOf<SolutionDeserializer>(msBuildProjectDeserializer).accept("projectPath/dir2/proj2.csproj")
+                oneOf<SolutionDeserializer>(msBuildProjectDeserializer).accept(Paths.get("projectPath/dir2/proj2.csproj"))
                 will(returnValue(true))
 
                 oneOf<SolutionDeserializer>(msBuildProjectDeserializer).deserialize(
-                    "projectPath/dir2/proj2.csproj",
+                    Paths.get("projectPath/dir2/proj2.csproj"),
                     streamFactory
                 )
                 will(returnValue(solution2))
 
-                oneOf<SolutionDeserializer>(msBuildProjectDeserializer).accept("projectPath/Solution Items")
+                oneOf<SolutionDeserializer>(msBuildProjectDeserializer).accept(Paths.get("projectPath/Solution Items"))
                 will(returnValue(false))
             }
         })
@@ -106,9 +114,8 @@ class MSBuildSolutionDeserializerTest {
             arrayOf("abc.", false),
             arrayOf("abc", false),
             arrayOf("abc.proj", false),
-            arrayOf(".sln", false),
+            arrayOf(".sln", true),
             arrayOf("sln", false),
-            arrayOf("  ", false),
             arrayOf("", false)
         )
     }
@@ -124,7 +131,7 @@ class MSBuildSolutionDeserializerTest {
         )
 
         // When
-        val actualAccepted = deserializer.accept(path)
+        val actualAccepted = deserializer.accept(Paths.get(path))
 
         // Then
         Assert.assertEquals(actualAccepted, expectedAccepted)
@@ -153,9 +160,9 @@ class MSBuildSolutionDeserializerTest {
         )
 
         // When
-        val actualPath = deserializer.normalizePath(basePath, path)
+        val actualPath = deserializer.getProjectPath(Paths.get(basePath), Paths.get(path))
 
         // Then
-        Assert.assertEquals(actualPath, expectedPath)
+        Assert.assertEquals(actualPath.toNormalizedUnixString(), expectedPath)
     }
 }

@@ -1,103 +1,149 @@
 package org.jetbrains.dotnet.discovery
 
 
+import org.jetbrains.dotnet.common.XPathReader
 import org.jetbrains.dotnet.common.XmlDocumentService
+import org.jetbrains.dotnet.common.toNormalizedUnixString
+import org.jetbrains.dotnet.common.toSystem
+import org.jetbrains.dotnet.discovery.data.*
+import org.jetbrains.dotnet.discovery.data.Reference.Companion.DEFAULT_VERSION
+import org.jetbrains.dotnet.discovery.data.Target
 import org.w3c.dom.Document
 import org.w3c.dom.Element
-import org.w3c.dom.NodeList
-import java.util.regex.Pattern
-import java.util.regex.Pattern.CASE_INSENSITIVE
-import javax.xml.xpath.XPathConstants
-import javax.xml.xpath.XPathFactory
+import java.nio.file.Path
+import java.nio.file.Paths
 
 class MSBuildProjectDeserializer(
-    private val _xmlDocumentService: XmlDocumentService
-) : SolutionDeserializer {
-    override fun accept(path: String): Boolean = PathPattern.matcher(path).find()
+    private val _xmlDocumentService: XmlDocumentService,
+    private val sourceDiscoverer: NuGetConfigDiscoverer? = null
+) : XPathReader(), SolutionDeserializer {
+    override fun accept(path: Path): Boolean =
+        supportedConfigs.contains(path.toSystem().toFile().extension.toLowerCase())
 
-    override fun deserialize(path: String, streamFactory: StreamFactory): Solution =
-        streamFactory.tryCreate(path)?.let {
-            it.use {
-                val doc = _xmlDocumentService.deserialize(it)
+    override fun deserialize(path: Path, projectStreamFactory: ProjectStreamFactory): Solution =
+        projectStreamFactory.tryCreate(path)?.use { stream ->
+            val doc = _xmlDocumentService.deserialize(stream)
 
-                val configurations = getAttributes(doc, "/Project/*[@Condition]", "Condition")
-                    .map { ConditionPattern.find(it) }
-                    .map { it?.let { it.groupValues[2] } }
-                    .filter { !it.isNullOrBlank() }
-                    .map { it as String }
-                    .plus(getContents(doc, "/Project/PropertyGroup/Configuration"))
-                    .distinct()
-                    .map { Configuration(it) }
-                    .toList()
+            val packagesConfigPath = Paths.get(path.parent?.toString() ?: "", "packages.config")
 
-                val frameworks = getContents(doc, "/Project/PropertyGroup/TargetFrameworks")
-                    .flatMap { it.split(';').asSequence() }
-                    .plus(getContents(doc, "/Project/PropertyGroup/TargetFramework"))
-                    .distinct()
-                    .map { Framework(it) }
-                    .toList()
+            val packagesConfig = projectStreamFactory.tryCreate(packagesConfigPath)?.use { packageConfigDoc ->
+                loadPackagesConfig(_xmlDocumentService.deserialize(packageConfigDoc))
+                    .map { Reference(it.first, it.second, packagesConfigPath.toNormalizedUnixString()) }
+            } ?: emptySequence()
 
-                val runtimes = getContents(doc, "/Project/PropertyGroup/RuntimeIdentifiers")
-                    .flatMap { it.split(';').asSequence() }
-                    .plus(getContents(doc, "/Project/PropertyGroup/RuntimeIdentifier"))
-                    .distinct()
-                    .map { Runtime(it) }
-                    .toList()
+            val configurations = getAttributes(doc, "/Project/*[@Condition]", "Condition")
+                .mapNotNull { ConditionPattern.find(it)?.groupValues?.get(2) }
+                .filter { it.isNotBlank() }
+                .plus(getContents(doc, "/Project/PropertyGroup/Configuration"))
+                .distinct()
+                .map { Configuration(it) }
+                .toList()
 
-                val references = getAttributes(doc, "/Project/ItemGroup/PackageReference[@Include]", "Include")
-                    .filter { !it.isBlank() }
-                    .plus(
-                        getAttributes(doc, "/Project/ItemGroup/Reference[@Include]", "Include")
-                            .map { it.split(',').firstOrNull() }
-                            .filter { !it.isNullOrBlank() })
-                    .distinct()
-                    .map { Reference(it!!) }
-                    .toList()
+            val frameworks = getContents(doc, "/Project/PropertyGroup/TargetFrameworks")
+                .flatMap { it.split(';').asSequence() }
+                .plus(getContents(doc, "/Project/PropertyGroup/TargetFramework"))
+                .distinct()
+                .map { Framework(it) }
+                .toList()
 
-                val targets = getAttributes(doc, "/Project/Target[@Name]", "Name")
-                    .distinct()
-                    .map { Target(it) }
-                    .toList()
+            val runtimes = getContents(doc, "/Project/PropertyGroup/RuntimeIdentifiers")
+                .flatMap { it.split(';').asSequence() }
+                .plus(getContents(doc, "/Project/PropertyGroup/RuntimeIdentifier"))
+                .distinct()
+                .map { Runtime(it) }
+                .toList()
 
-                val generatePackageOnBuild = getContents(doc, "/Project/PropertyGroup/GeneratePackageOnBuild")
-                    .filter { "true".equals(it.trim(), true) }
-                    .any()
+            val references = getPackageReferences(doc, "/Project/ItemGroup/PackageReference[@Include]")
+                .map { Reference(it.first, it.second, path.toNormalizedUnixString()) }
+                .plus(
+                    getAttributes(doc, "/Project/ItemGroup/Reference[@Include]", "Include")
+                        .map {
+                            val attributes = it.split(',')
+                            val id = attributes.first()
+                            val version = attributes
+                                .mapNotNull { versionPattern.find(it)?.groupValues?.get(1) }
+                                .firstOrNull() ?: DEFAULT_VERSION
 
-                Solution(
-                    listOf(
-                        Project(
-                            path,
-                            configurations,
-                            frameworks,
-                            runtimes,
-                            references,
-                            targets,
-                            generatePackageOnBuild
-                        )
+                            Reference(id, version, path.toNormalizedUnixString())
+                        }
+                )
+                .plus(packagesConfig)
+                .filter { it.id.isNotBlank() }
+                .distinct()
+                .toList()
+
+            val targets = getAttributes(doc, "/Project/Target[@Name]", "Name")
+                .distinct()
+                .map { Target(it) }
+                .toList()
+
+            val generatePackageOnBuild = getContents(doc, "/Project/PropertyGroup/GeneratePackageOnBuild")
+                .filter { "true".equals(it.trim(), true) }
+                .any()
+
+            val sources = sourceDiscoverer?.discover(path, projectStreamFactory)?.toList() ?: emptyList()
+
+            Solution(
+                listOf(
+                    Project(
+                        path.toNormalizedUnixString(),
+                        configurations,
+                        frameworks,
+                        runtimes,
+                        references,
+                        targets,
+                        sources,
+                        generatePackageOnBuild
                     )
                 )
-            }
+            )
         } ?: Solution(emptyList())
 
-    private fun getElements(doc: Document, xpath: String): Sequence<Element> = sequence {
-        val nodes = xPath.evaluate(xpath, doc, XPathConstants.NODESET) as NodeList
-        for (i in 0 until nodes.length) {
-            val element = nodes.item(i) as Element
-            yield(element)
+    private fun getPackageReferences(doc: Document, xpath: String): Sequence<Pair<String, String>> =
+        getElements(doc, xpath)
+            .map { Pair(it.getAttribute("Include") ?: "", getVersion(it)) }
+            .filter { it.first.isNotEmpty() }
+
+    private fun getVersion(element: Element): String {
+        val rawVersion = when {
+            element.hasAttribute("Version") -> element.getAttribute("Version")
+            else -> element.getElementsByTagName("Version")?.item(0)?.textContent
+        }
+        return if (rawVersion.isNullOrBlank()) {
+            DEFAULT_VERSION
+        } else {
+            rawVersion
         }
     }
 
-    private fun getContents(doc: Document, xpath: String): Sequence<String> =
-        getElements(doc, xpath).map { it.textContent }.filter { !it.isNullOrBlank() }
-
-    private fun getAttributes(doc: Document, xpath: String, attributeName: String): Sequence<String> =
-        getElements(doc, xpath).map { it.getAttribute(attributeName) }.filter { !it.isNullOrBlank() }
-
-    private val xPath = XPathFactory.newInstance().newXPath()
+    private fun loadPackagesConfig(doc: Document): Sequence<Pair<String, String>> =
+        getElements(doc, "/packages/package")
+            .map {
+                Pair(
+                    it.getAttribute("id") ?: "",
+                    it.getAttribute("version") ?: DEFAULT_VERSION
+                )
+            }
+            .filter { it.first.isNotBlank() }
 
     companion object {
         private val ConditionPattern: Regex =
             Regex("'\\$\\(Configuration\\)([^']*)' == '([^|]*)([^']*)'", RegexOption.IGNORE_CASE)
-        private val PathPattern: Pattern = Pattern.compile("^.+\\.(proj|csproj|vbproj)$", CASE_INSENSITIVE)
+        private val versionPattern: Regex = Regex("""^\s*Version\s*=\s*(.*)$""")
+        val supportedConfigs = listOf(
+            "csproj",
+            "vbproj",
+            "vcxproj",
+            "dbproj",
+            "fsproj",
+            "pyproj",
+            "rbproj",
+            "wixproj",
+            "vdproj",
+            "isproj",
+            "pssproj",
+            "modelproj",
+            "proj"
+        )
     }
 }
